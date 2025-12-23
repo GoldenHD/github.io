@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态圣诞树</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #0a192f 0%, #001122 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        /* 密码输入容器 */
+        .password-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 17, 34, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            transition: opacity 1s ease, visibility 1s ease;
+        }
+
+        .password-container.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .password-box {
+            background: rgba(10, 25, 47, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(100, 255, 218, 0.3);
+            border: 2px solid rgba(100, 255, 218, 0.2);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .password-title {
+            color: #64ffda;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(100, 255, 218, 0.7);
+            letter-spacing: 2px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(100, 255, 218, 0.5);
+            border-radius: 10px;
+            color: #64ffda;
+            text-align: center;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 20px rgba(100, 255, 218, 0.5);
+        }
+
+        .password-hint {
+            color: rgba(100, 255, 218, 0.7);
+            font-size: 1rem;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .password-btn {
+            padding: 15px 40px;
+            background: linear-gradient(45deg, #0a7e0a, #64ffda);
+            border: none;
+            border-radius: 50px;
+            color: #001122;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .password-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(100, 255, 218, 0.4);
+        }
+
+        .password-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .error-message {
+            color: #ff5252;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            min-height: 24px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .error-message.show {
+            opacity: 1;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 1.5s ease, transform 1.5s ease;
+        }
+
+        .container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 圣诞树容器 */
+        .tree-container {
+            position: relative;
+            width: 300px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 1s ease 0.5s, transform 1s ease 0.5s;
+        }
+
+        .container.visible .tree-container {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* 树顶星星 */
+        .star {
+            position: absolute;
+            top: -20px;
+            width: 60px;
+            height: 60px;
+            background: #FFD700;
+            clip-path: polygon(50% 0%,
+                    61% 35%,
+                    98% 35%,
+                    68% 57%,
+                    79% 91%,
+                    50% 70%,
+                    21% 91%,
+                    32% 57%,
+                    2% 35%,
+                    39% 35%);
+            animation: starGlow 2s infinite alternate;
+            z-index: 10;
+        }
+
+        @keyframes starGlow {
+            0% {
+                transform: scale(1) rotate(0deg);
+                box-shadow: 0 0 10px #FFD700;
+            }
+
+            100% {
+                transform: scale(1.2) rotate(180deg);
+                box-shadow: 0 0 30px #FFD700, 0 0 50px #FFD700;
+            }
+        }
+
+        /* 树冠层 */
+        .tree-layer {
+            position: absolute;
+            border-left: 80px solid transparent;
+            border-right: 80px solid transparent;
+            border-bottom: 120px solid;
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.5));
+        }
+
+        .layer-1 {
+            top: 50px;
+            border-bottom-color: #0a7e0a;
+            width: 0;
+            height: 0;
+            z-index: 5;
+        }
+
+        .layer-2 {
+            top: 100px;
+            border-left: 100px solid transparent;
+            border-right: 100px solid transparent;
+            border-bottom: 150px solid #0b8e0b;
+            z-index: 4;
+        }
+
+        .layer-3 {
+            top: 160px;
+            border-left: 120px solid transparent;
+            border-right: 120px solid transparent;
+            border-bottom: 180px solid #0c9e0c;
+            z-index: 3;
+        }
+
+        /* 树干 */
+        .trunk {
+            position: absolute;
+            bottom: 0;
+            width: 40px;
+            height: 200px;
+            background: linear-gradient(to right, #8B4513, #A0522D, #8B4513);
+            border-radius: 5px;
+            z-index: 2;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 装饰品 */
+        .ornament {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            z-index: 6;
+            animation: ornamentFloat 4s infinite ease-in-out;
+            box-shadow: 0 0 10px currentColor;
+            cursor: pointer;
+        }
+
+        @keyframes ornamentFloat {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-10px) rotate(180deg);
+            }
+        }
+
+        /* 闪烁灯光 */
+        .light {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            z-index: 5;
+            animation: lightBlink 1.5s infinite alternate;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        @keyframes lightBlink {
+            0% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* 雪花 */
+        .snow {
+            position: absolute;
+            top: -10px;
+            background: white;
+            border-radius: 50%;
+            filter: blur(1px);
+            opacity: 0.9;
+            animation: snowFall linear infinite;
+        }
+
+        @keyframes snowFall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+
+        /* 地面 */
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(to top, #1a1a2e, #16213e);
+            border-radius: 50% 50% 0 0;
+            z-index: 1;
+            box-shadow:
+                inset 0 10px 20px rgba(255, 255, 255, 0.1),
+                0 -10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 礼物 */
+        .gift {
+            position: absolute;
+            bottom: 80px;
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            z-index: 2;
+            animation: giftFloat 3s infinite ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .gift-ribbon {
+            position: absolute;
+            width: 100%;
+            height: 15px;
+            background-color: #ff4081;
+        }
+
+        .gift-ribbon::before {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #ff4081;
+            top: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 50%;
+        }
+
+        @keyframes giftFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        /* 控制按钮 */
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 1s ease 1s;
+        }
+
+        .container.visible .controls {
+            opacity: 1;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(100, 255, 218, 0.3);
+            color: #64ffda;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .control-btn:hover {
+            background: rgba(100, 255, 218, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.2);
+        }
+
+        /* 标题 */
+        .title {
+            position: absolute;
+            top: 20px;
+            color: #64ffda;
+            font-size: 2.5rem;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+            letter-spacing: 3px;
+            z-index: 10;
+            opacity: 0;
+            transform: translateY(-30px);
+            transition: opacity 1s ease 0.3s, transform 1s ease 0.3s;
+        }
+
+        .container.visible .title {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 艺术字容器 */
+        .art-text {
+            position: absolute;
+            bottom: 120px;
+            color: #fff;
+            font-size: 2rem;
+            text-align: center;
+            z-index: 5;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1s ease 0.8s, transform 1s ease 0.8s;
+        }
+
+        .container.visible .art-text {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .art-text span {
+            background: linear-gradient(45deg, #FFD700, #FF4081, #64ffda, #FFD700);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            font-weight: bold;
+            letter-spacing: 2px;
+            font-family: 'Georgia', serif;
+            padding: 10px 20px;
+            display: inline-block;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .art-text span::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(45deg, #FFD700, #FF4081, #64ffda);
+            border-radius: 15px;
+            z-index: -1;
+            filter: blur(15px);
+            opacity: 0.7;
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .tree-container {
+                transform: scale(0.8);
+            }
+
+            .container.visible .tree-container {
+                transform: scale(0.8);
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .password-title {
+                font-size: 2rem;
+            }
+
+            .password-box {
+                padding: 30px 20px;
+            }
+
+            .art-text {
+                font-size: 1.5rem;
+                bottom: 100px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 密码输入界面 -->
+    <div class="password-container" id="passwordContainer">
+        <div class="password-box">
+            <h1 class="password-title">🎄 圣诞魔法 🎄</h1>
+            <p class="password-hint">请输入小鱼咒语开启圣诞树<br><em>提示：小鱼的名字！</em></p>
+            <input type="text" class="password-input" id="passwordInput" placeholder="请输入小鱼咒语..." autocomplete="off">
+            <button class="password-btn" id="passwordBtn">开启小鱼的圣诞魔法</button>
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+    </div>
+
+    <!-- 圣诞树主界面 -->
+    <div class="container" id="mainContainer">
+        <div class="title">🎄Dear:任小鱼 🎄</div>
+
+        <div class="tree-container">
+            <div class="star"></div>
+            <div class="tree-layer layer-1"></div>
+            <div class="tree-layer layer-2"></div>
+            <div class="tree-layer layer-3"></div>
+            <div class="trunk"></div>
+            <!-- 装饰品和灯光将通过JS添加 -->
+        </div>
+
+        <!-- 艺术字 -->
+        <div class="art-text">
+            <span>圣诞快乐呀我的小鱼鱼，老公永远爱你！</span>
+        </div>
+
+
+    </div>
+
+    <script>
+        // 设置正确的密码（你可以修改这个密码）
+        const CORRECT_PASSWORD = "任梦涵";
+
+        // 获取DOM元素
+        const passwordContainer = document.getElementById('passwordContainer');
+        const mainContainer = document.getElementById('mainContainer');
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordBtn = document.getElementById('passwordBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // 密码验证函数
+        function checkPassword() {
+            const input = passwordInput.value.trim();
+
+            if (input === CORRECT_PASSWORD) {
+                // 密码正确，隐藏密码界面，显示圣诞树
+                passwordContainer.classList.add('hidden');
+                setTimeout(() => {
+                    mainContainer.classList.add('visible');
+                    // 初始化圣诞树
+                    initChristmasTree();
+                }, 500);
+
+                // 清除错误信息
+                errorMessage.textContent = '';
+                errorMessage.classList.remove('show');
+            } else {
+                // 密码错误
+                errorMessage.textContent = '咒语错误！请再试一次。提示：小鱼的名字！';
+                errorMessage.classList.add('show');
+
+                // 添加抖动效果
+                passwordInput.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    passwordInput.style.animation = '';
+                }, 500);
+
+                // 清空输入框
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+
+        // 添加抖动动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 添加事件监听器
+        passwordBtn.addEventListener('click', checkPassword);
+
+        passwordInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        // 初始化圣诞树
+        function initChristmasTree() {
+            createOrnaments();
+            createLights();
+            createSnow();
+            createGifts();
+            setupLightControls();
+            setupSnowControls();
+            setupAnimationControls();
+
+            // 添加星星点击效果
+            const star = document.querySelector('.star');
+            star.addEventListener('click', function () {
+                const originalScale = this.style.transform;
+                this.style.transform = 'scale(2)';
+                this.style.backgroundColor = '#FFFFFF';
+
+                setTimeout(() => {
+                    this.style.transform = originalScale;
+                    this.style.backgroundColor = '#FFD700';
+                }, 500);
+            });
+
+            // 添加树点击效果
+            const treeLayers = document.querySelectorAll('.tree-layer');
+            treeLayers.forEach(layer => {
+                layer.addEventListener('click', function () {
+                    const originalColor = this.style.borderBottomColor;
+                    this.style.borderBottomColor = '#FFFFFF';
+
+                    setTimeout(() => {
+                        this.style.borderBottomColor = originalColor;
+                    }, 300);
+                });
+            });
+        }
+
+        // 生成装饰品
+        function createOrnaments() {
+            const treeContainer = document.querySelector('.tree-container');
+            const colors = ['#FF5252', '#FF4081', '#E040FB', '#536DFE', '#448AFF', '#40C4FF', '#18FFFF', '#64FFDA', '#69F0AE', '#B2FF59', '#EEFF41', '#FFD740', '#FFAB40', '#FF6E40'];
+
+            // 装饰品位置（在树冠内）
+            const positions = [
+                // 第一层
+                { top: '60px', left: '50%', color: colors[0] },
+                { top: '80px', left: '40%', color: colors[1] },
+                { top: '80px', left: '60%', color: colors[2] },
+
+                // 第二层
+                { top: '120px', left: '45%', color: colors[3] },
+                { top: '140px', left: '35%', color: colors[4] },
+                { top: '140px', left: '55%', color: colors[5] },
+                { top: '160px', left: '50%', color: colors[6] },
+
+                // 第三层
+                { top: '200px', left: '40%', color: colors[7] },
+                { top: '220px', left: '30%', color: colors[8] },
+                { top: '220px', left: '50%', color: colors[9] },
+                { top: '220px', left: '70%', color: colors[10] },
+                { top: '240px', left: '45%', color: colors[11] },
+                { top: '240px', left: '65%', color: colors[12] },
+                { top: '260px', left: '55%', color: colors[13] },
+            ];
+
+            positions.forEach(pos => {
+                const ornament = document.createElement('div');
+                ornament.className = 'ornament';
+                ornament.style.top = pos.top;
+                ornament.style.left = pos.left;
+                ornament.style.backgroundColor = pos.color;
+                ornament.style.boxShadow = `0 0 15px ${pos.color}`;
+
+                // 随机动画延迟
+                ornament.style.animationDelay = `${Math.random() * 4}s`;
+
+                // 点击效果
+                ornament.addEventListener('click', function () {
+                    const originalColor = this.style.backgroundColor;
+                    this.style.backgroundColor = '#FFFFFF';
+                    this.style.boxShadow = '0 0 20px #FFFFFF';
+                    this.style.transform = 'scale(1.5)';
+
+                    setTimeout(() => {
+                        this.style.backgroundColor = originalColor;
+                        this.style.boxShadow = `0 0 15px ${originalColor}`;
+                        this.style.transform = '';
+                    }, 300);
+                });
+
+                treeContainer.appendChild(ornament);
+            });
+        }
+
+        // 生成灯光
+        function createLights() {
+            const treeContainer = document.querySelector('.tree-container');
+            const colors = ['#FF5252', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0', '#FF9800', '#00BCD4', '#E91E63', '#FF4081', '#8BC34A', '#FFC107', '#3F51B5'];
+
+            // 灯光位置（在树冠边缘）
+            const positions = [
+                // 第一层边缘
+                { top: '55px', left: '45%', color: colors[0] },
+                { top: '55px', left: '55%', color: colors[1] },
+                { top: '75px', left: '35%', color: colors[2] },
+                { top: '75px', left: '65%', color: colors[3] },
+
+                // 第二层边缘
+                { top: '115px', left: '30%', color: colors[4] },
+                { top: '115px', left: '50%', color: colors[5] },
+                { top: '115px', left: '70%', color: colors[6] },
+                { top: '135px', left: '40%', color: colors[7] },
+                { top: '135px', left: '60%', color: colors[8] },
+
+                // 第三层边缘
+                { top: '175px', left: '25%', color: colors[9] },
+                { top: '175px', left: '45%', color: colors[10] },
+                { top: '175px', left: '65%', color: colors[11] },
+                { top: '175px', left: '85%', color: colors[0] },
+                { top: '195px', left: '35%', color: colors[1] },
+                { top: '195px', left: '55%', color: colors[2] },
+                { top: '195px', left: '75%', color: colors[3] },
+                { top: '215px', left: '45%', color: colors[4] },
+                { top: '215px', left: '65%', color: colors[5] },
+                { top: '235px', left: '55%', color: colors[6] },
+            ];
+
+            positions.forEach(pos => {
+                const light = document.createElement('div');
+                light.className = 'light';
+                light.style.top = pos.top;
+                light.style.left = pos.left;
+                light.style.backgroundColor = pos.color;
+
+                // 随机动画延迟
+                light.style.animationDelay = `${Math.random() * 2}s`;
+
+                treeContainer.appendChild(light);
+            });
+        }
+
+        // 生成雪花
+        function createSnow() {
+            const container = document.querySelector('.container');
+            const snowCount = 80;
+
+            for (let i = 0; i < snowCount; i++) {
+                const snow = document.createElement('div');
+                snow.className = 'snow';
+
+                // 随机大小
+                const size = Math.random() * 5 + 2;
+                const left = Math.random() * 100;
+                const duration = Math.random() * 10 + 10;
+                const delay = Math.random() * 10;
+                const opacity = Math.random() * 0.5 + 0.5;
+
+                snow.style.width = `${size}px`;
+                snow.style.height = `${size}px`;
+                snow.style.left = `${left}%`;
+                snow.style.animationDuration = `${duration}s`;
+                snow.style.animationDelay = `${delay}s`;
+                snow.style.opacity = opacity;
+
+                container.appendChild(snow);
+            }
+        }
+
+        // 生成礼物
+
+        // 页面加载后聚焦到输入框
+        document.addEventListener('DOMContentLoaded', function () {
+            passwordInput.focus();
+
+            // 添加一个初始提示
+            setTimeout(() => {
+                const message = document.createElement('div');
+                message.textContent = '✨ 请输入小鱼专属咒语开启鱼鱼圣诞树！';
+                message.style.position = 'fixed';
+                message.style.top = '10px';
+                message.style.left = '50%';
+                message.style.transform = 'translateX(-50%)';
+                message.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                message.style.color = '#64ffda';
+                message.style.padding = '10px 20px';
+                message.style.borderRadius = '10px';
+                message.style.fontSize = '0.9rem';
+                message.style.zIndex = '1001';
+                message.style.boxShadow = '0 0 15px rgba(100, 255, 218, 0.5)';
+                message.style.textAlign = 'center';
+                message.style.maxWidth = '90%';
+
+                document.body.appendChild(message);
+
+                // 3秒后移除提示
+                setTimeout(() => {
+                    message.style.opacity = '0';
+                    message.style.transition = 'opacity 1s';
+
+                    setTimeout(() => {
+                        document.body.removeChild(message);
+                    }, 1000);
+                }, 3000);
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>
