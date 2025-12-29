@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏榜单管理 - 游戏市场分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 背景和星空效果 */
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(10, 25, 47, 0.9), rgba(10, 25, 47, 0.9)), url("https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80");
+            background-size: cover;
+            background-position: center;
+            opacity: 0.7;
+            z-index: -2;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 1s infinite;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+
+        /* 导航栏 */
+        #daohang {
+            display: flex;
+            height: 70px;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 25, 47, 0.9);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 0 50px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        #daohang li {
+            align-items: center;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            flex: 1;
+            justify-content: center;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        #daohang li:hover {
+            background: rgba(100, 255, 218, 0.1);
+        }
+
+        .line1 {
+            display: inline-block;
+            height: 30px;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        a.daohangTo {
+            color: #ccd6f6;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        a.daohangTo:hover {
+            color: #64ffda;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+
+        a.back {
+            color: #ff6b6b;
+        }
+
+        a.back:hover {
+            color: #ff5252;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+
+        /* 主要内容区域 */
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* 标签页样式 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            padding: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            background: transparent;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            color: #ccd6f6;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .tab-btn:hover {
+            background: rgba(100, 255, 218, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background: rgba(100, 255, 218, 0.2);
+            color: #64ffda;
+            border-color: #64ffda;
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.2);
+        }
+
+        /* 标签内容区域 */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            min-height: 600px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 榜单查看样式 */
+        .platform-selector {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        #platformSelect {
+            padding: 12px 30px;
+            font-size: 16px;
+            background: rgba(10, 25, 47, 0.7);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            min-width: 250px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #platformSelect:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        #platformSelect option {
+            background: #0a192f;
+            color: #fff;
+        }
+
+        /* 游戏网格布局 */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .game-card {
+            background: rgba(10, 25, 47, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            position: relative;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            border-color: rgba(100, 255, 218, 0.3);
+        }
+
+        .rank-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(100, 255, 218, 0.2);
+            color: #64ffda;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 2;
+            border: 2px solid rgba(100, 255, 218, 0.5);
+        }
+
+        .rank-badge.top3 {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+
+        .rank-badge.top1 {
+            background: rgba(255, 87, 34, 0.2);
+            color: #ff5722;
+            border-color: rgba(255, 87, 34, 0.5);
+        }
+
+        .game-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 3px solid rgba(100, 255, 218, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .game-card:hover .game-img {
+            transform: scale(1.05);
+        }
+
+        .game-info {
+            padding: 20px;
+        }
+
+        .game-title {
+            color: #64ffda;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .game-publisher {
+            color: #8892b0;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .game-platform {
+            color: #64ffda;
+            font-size: 14px;
+            font-weight: 500;
+            background: rgba(100, 255, 218, 0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        /* 数据更新样式 */
+        .update-form {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #64ffda;
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .site-select {
+            width: 100%;
+            padding: 15px;
+            background: rgba(10, 25, 47, 0.7);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            min-height: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .site-select:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .site-select option {
+            background: #0a192f;
+            color: #fff;
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        .page-params {
+            background: rgba(17, 34, 64, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .page-input-group {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(10, 25, 47, 0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .page-input-group label {
+            display: inline-block;
+            margin-bottom: 10px;
+            color: #ccd6f6;
+        }
+
+        .page-input {
+            width: 100%;
+            max-width: 200px;
+            padding: 10px 15px;
+            background: rgba(10, 25, 47, 0.9);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .page-input:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #64ffda 0%, #00b894 100%);
+            color: #0a192f;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 30px auto;
+            min-width: 200px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 状态消息 */
+        .status-msg {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+            border: 1px solid;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-msg.success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border-color: rgba(40, 167, 69, 0.3);
+        }
+
+        .status-msg.error {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border-color: rgba(220, 53, 69, 0.3);
+        }
+
+        .status-msg.info {
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+            border-color: rgba(23, 162, 184, 0.3);
+        }
+
+        /* 加载状态 */
+        .loading-container {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(100, 255, 218, 0.3);
+            border-radius: 50%;
+            border-top-color: #64ffda;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: #64ffda;
+            font-size: 16px;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8892b0;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* 滚动条样式 */
+        .tab-content {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(23, 42, 70, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 255, 218, 0.3);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 255, 218, 0.5);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .game-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            #daohang {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px;
+            }
+
+            #daohang li {
+                flex: 1 0 33%;
+                margin: 5px 0;
+            }
+
+            .container {
+                padding: 0 15px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .game-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+            }
+
+            .tab-content {
+                padding: 20px;
+                min-height: 500px;
+            }
+
+            #platformSelect {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #daohang li {
+                flex: 1 0 50%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="background"></div>
+    <div class="stars"></div>
+
+    <ul id="daohang" type="none">
+        <li><a class="daohangTo" href="bangdan.html">游戏榜单</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="lxfb.html">类型分布</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="zhuye.html">首页</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Trend.html">发布情况</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Player.html">玩家</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Ai.html">AI分析</a></li>
+        <div class="line1"></div>
+        <li><a class="back daohangTo" href="Login.html">退出</a></li>
+    </ul>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab(0)">榜单查看</button>
+            <button class="tab-btn" onclick="showTab(1)">数据更新</button>
+        </div>
+
+        <!-- 榜单查看 Tab -->
+        <div id="tab1" class="tab-content active">
+            <div class="platform-selector">
+                <select id="platformSelect">
+                    <option value="" disabled selected>选择游戏平台</option>
+                    <option value="gamespot">Gamespot</option>
+                    <option value="3dm">3DM</option>
+                    <option value="ign">IGN</option>
+                    <option value="youxia">游侠网</option>
+                    <option value="6m">Metacritic</option>
+                    <option value="ymxk">游民星空</option>
+                </select>
+            </div>
+            <div id="gameList" class="game-grid"></div>
+
+            <!-- 加载状态 -->
+            <div id="loadingState" class="loading-container" style="display: none;">
+                <div class="loading"></div>
+                <div class="loading-text">正在加载游戏榜单...</div>
+            </div>
+
+            <!-- 空状态 -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">🎮</div>
+                <h3>暂无数据</h3>
+                <p>请选择一个游戏平台查看榜单</p>
+            </div>
+        </div>
+
+        <!-- 数据更新 Tab -->
+        <div id="tab2" class="tab-content">
+            <form id="updateForm" class="update-form">
+                <div class="form-group">
+                    <label>选择更新目标（可多选）：</label>
+                    <select multiple class="site-select" id="siteIds">
+                        <option value="3dm">3DM-TOP榜</option>
+                        <option value="gamersky">游民星空-TOP榜</option>
+                        <option value="youxia">游侠网-TOP榜</option>
+                        <option value="gamespot">Gamespot-TOP榜</option>
+                        <option value="ign">IGN-TOP榜</option>
+                        <option value="metacritic">Metacritic-TOP榜</option>
+                        <option value="3dmtype">3DM-游戏库</option>
+                        <option value="gamerskytype">游民星空-游戏库</option>
+                    </select>
+                </div>
+
+                <div id="pageParams" class="page-params"></div>
+
+                <div class="form-group">
+                    <button type="submit" class="submit-btn">立即更新</button>
+                </div>
+            </form>
+            <div id="statusMsg" class="status-msg"></div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化星空背景
+        function initStars() {
+            const stars = document.querySelector('.stars');
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.top = Math.random() * 100 + 'vh';
+                star.style.left = Math.random() * 100 + 'vw';
+                star.style.width = Math.random() * 3 + 1 + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDuration = Math.random() * 3 + 1 + 's';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                stars.appendChild(star);
+            }
+        }
+
+        // Tab切换功能
+        function showTab(index) {
+            document.querySelectorAll('.tab-content').forEach((tab, i) => {
+                tab.classList.toggle('active', i === index);
+                document.querySelectorAll('.tab-btn')[i].classList.toggle('active', i === index);
+            });
+
+            // 更新URL参数
+            history.replaceState(null, null, `#${index === 0 ? 'list' : 'update'}`);
+        }
+
+        // 从URL中恢复Tab状态
+        function restoreTabFromUrl() {
+            const hash = window.location.hash;
+            if (hash === '#update') {
+                showTab(1);
+            } else {
+                showTab(0);
+            }
+        }
+
+        // 榜单查看逻辑
+        const platformSelect = document.getElementById('platformSelect');
+        const gameList = document.getElementById('gameList');
+        const loadingState = document.getElementById('loadingState');
+        const emptyState = document.getElementById('emptyState');
+
+        // 平台显示名称映射
+        const platformNames = {
+            'gamespot': 'Gamespot',
+            '3dm': '3DM',
+            'ign': 'IGN',
+            'youxia': '游侠网',
+            '6m': 'Metacritic',
+            'ymxk': '游民星空'
+        };
+
+        platformSelect.addEventListener('change', async (e) => {
+            const platform = e.target.value;
+            if (platform) {
+                await fetchGames(platform);
+            }
+        });
+
+        async function fetchGames(platform) {
+            try {
+                // 显示加载状态
+                gameList.innerHTML = '';
+                loadingState.style.display = 'block';
+                emptyState.style.display = 'none';
+
+                const response = await fetch(`http://47.109.22.23:8082/listtop?platform=${platform}`);
+                if (!response.ok) throw new Error('请求失败');
+
+                const { code, msg, data } = await response.json();
+                if (code !== 1) throw new Error(msg || '数据获取失败');
+
+                renderGames(platform, data);
+            } catch (error) {
+                gameList.innerHTML = `<div class="error-msg">❌ ${error.message}</div>`;
+                emptyState.innerHTML = `
+                    <div class="empty-icon">⚠️</div>
+                    <h3>加载失败</h3>
+                    <p>${error.message}</p>
+                `;
+                emptyState.style.display = 'block';
+            } finally {
+                loadingState.style.display = 'none';
+            }
+        }
+
+        function renderGames(platform, games) {
+            if (!games || games.length === 0) {
+                emptyState.style.display = 'block';
+                gameList.innerHTML = '';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            gameList.innerHTML = games.map((game, index) => {
+                // 生成排名徽章类名
+                let rankClass = 'rank-badge';
+                if (index === 0) rankClass += ' top1';
+                else if (index < 3) rankClass += ' top3';
+
+                return `
+                    <div class="game-card">
+                        <div class="${rankClass}">${index + 1}</div>
+                        <img src="${game[2]}" alt="${game[0]}" class="game-img" loading="lazy" 
+                             onerror="this.src='https://via.placeholder.com/300x200?text=游戏封面'">
+                        <div class="game-info">
+                            <h3 class="game-title">${game[0]}</h3>
+                            <div class="game-publisher">发行商：${game[1] || '未知'}</div>
+                            <div class="game-platform">${platformNames[platform] || platform}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 数据更新逻辑
+        const updateForm = document.getElementById('updateForm');
+        const siteIds = document.getElementById('siteIds');
+        const pageParamsContainer = document.getElementById('pageParams');
+        const statusMsg = document.getElementById('statusMsg');
+
+        // 参数映射配置
+        const paramConfig = {
+            '3dmtype': {
+                param: 'page_count_3dm',
+                label: '3DM游戏库页数',
+                default: 1
+            },
+            'gamerskytype': {
+                param: 'page_count_gamersky',
+                label: '游民星空页数',
+                default: 1
+            }
+        };
+
+        siteIds.addEventListener('change', updatePageParams);
+
+        function updatePageParams() {
+            pageParamsContainer.innerHTML = '';
+            const selected = Array.from(siteIds.selectedOptions).map(o => o.value);
+
+            selected.forEach(site => {
+                if (paramConfig[site]) {
+                    const config = paramConfig[site];
+                    const div = document.createElement('div');
+                    div.className = 'page-input-group';
+                    div.innerHTML = `
+                        <label>${config.label}：</label>
+                        <input type="number" 
+                               min="1" 
+                               max="50"
+                               value="${config.default}" 
+                               class="page-input" 
+                               id="${config.param}"
+                               placeholder="请输入页数 (1-50)">
+                    `;
+                    pageParamsContainer.appendChild(div);
+                }
+            });
+
+            // 如果没有需要参数的选项，隐藏参数区域
+            pageParamsContainer.style.display = selected.some(site => paramConfig[site]) ? 'block' : 'none';
+        }
+
+        updateForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = updateForm.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+
+            const selectedSites = Array.from(siteIds.selectedOptions).map(o => o.value);
+            if (!selectedSites.length) {
+                showStatus('请至少选择一个更新目标', 'error');
+                return;
+            }
+
+            // 禁用提交按钮并显示加载状态
+            submitBtn.disabled = true;
+            submitBtn.textContent = '更新中...';
+
+            const params = new URLSearchParams({
+                site_ids: selectedSites.join(',')
+            });
+
+            // 添加分页参数
+            selectedSites.forEach(site => {
+                const config = paramConfig[site];
+                if (config) {
+                    const input = document.getElementById(config.param);
+                    const value = Math.max(1, Math.min(50, parseInt(input.value) || config.default));
+                    params.append(config.param, value);
+                }
+            });
+
+            try {
+                showStatus('正在更新数据，请稍候...', 'info');
+
+                const response = await fetch(`http://47.109.22.23:8082/updategames?${params.toString()}`);
+                if (!response.ok) throw new Error(`HTTP错误: ${response.status}`);
+
+                const { code, msg } = await response.json();
+
+                if (code === 1) {
+                    showStatus(`✅ 更新成功：${msg}`, 'success');
+
+                    // 如果正在查看榜单，自动刷新当前选中的平台
+                    const currentPlatform = platformSelect.value;
+                    if (currentPlatform && document.querySelector('.tab-btn.active').textContent === '榜单查看') {
+                        setTimeout(() => fetchGames(currentPlatform), 1000);
+                    }
+                } else {
+                    showStatus(`❌ 更新失败：${msg}`, 'error');
+                }
+            } catch (error) {
+                console.error('更新错误:', error);
+                showStatus(`❌ 更新失败：${error.message}`, 'error');
+            } finally {
+                // 恢复提交按钮
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+
+                // 5秒后自动隐藏成功/错误消息
+                setTimeout(() => {
+                    statusMsg.style.display = 'none';
+                }, 5000);
+            }
+        });
+
+        function showStatus(message, type) {
+            statusMsg.textContent = message;
+            statusMsg.className = `status-msg ${type}`;
+            statusMsg.style.display = 'block';
+        }
+
+        // 页面初始化
+        function initPage() {
+            initStars();
+            restoreTabFromUrl();
+            updatePageParams();
+
+            // 监听URL变化
+            window.addEventListener('hashchange', restoreTabFromUrl);
+
+            // 设置表单输入框样式
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function () {
+                    this.style.background = 'rgba(10, 25, 47, 0.9)';
+                });
+
+                input.addEventListener('blur', function () {
+                    this.style.background = 'rgba(10, 25, 47, 0.7)';
+                });
+            });
+
+            // 显示初始状态
+            emptyState.style.display = 'block';
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+
+</html>

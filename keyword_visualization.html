@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hant">
+
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>游戏评论关键词分析仪表板</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+                /* 关键词分析仪表板样式 - 基于zhuye.css风格 */
+                * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                }
+
+                body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+                        color: #fff;
+                        min-height: 100vh;
+                        overflow-x: hidden;
+                        padding: 0;
+                }
+
+                /* 背景和星空效果 */
+                #background {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background-image: linear-gradient(rgba(10, 25, 47, 0.9), rgba(10, 25, 47, 0.9)), url("https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80");
+                        background-size: cover;
+                        background-position: center;
+                        opacity: 0.7;
+                        z-index: -2;
+                }
+
+                .stars {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        z-index: -1;
+                }
+
+                .star {
+                        position: absolute;
+                        background: #fff;
+                        border-radius: 50%;
+                        animation: twinkle 1s infinite;
+                }
+
+                @keyframes twinkle {
+                        0% {
+                                opacity: 0;
+                                transform: scale(0);
+                        }
+
+                        50% {
+                                opacity: 1;
+                                transform: scale(1);
+                        }
+
+                        100% {
+                                opacity: 0;
+                                transform: scale(0);
+                        }
+                }
+
+                /* 导航栏 */
+                #daohang {
+                        display: flex;
+                        height: 70px;
+                        align-items: center;
+                        justify-content: space-between;
+                        background: rgba(10, 25, 47, 0.9);
+                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+                        padding: 0 50px;
+                        position: sticky;
+                        top: 0;
+                        z-index: 100;
+                        backdrop-filter: blur(10px);
+                        border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+                        margin-bottom: 30px;
+                }
+
+                #daohang li {
+                        align-items: center;
+                        font-weight: 600;
+                        font-size: 16px;
+                        display: flex;
+                        flex: 1;
+                        justify-content: center;
+                        height: 100%;
+                        transition: all 0.3s ease;
+                }
+
+                #daohang li:hover {
+                        background: rgba(100, 255, 218, 0.1);
+                }
+
+                .line1 {
+                        display: inline-block;
+                        height: 30px;
+                        width: 1px;
+                        background: rgba(255, 255, 255, 0.3);
+                }
+
+                a.daohangTo {
+                        color: #ccd6f6;
+                        text-decoration: none;
+                        padding: 10px 15px;
+                        border-radius: 4px;
+                        transition: all 0.3s ease;
+                        width: 100%;
+                        text-align: center;
+                }
+
+                a.daohangTo:hover {
+                        color: #64ffda;
+                        text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+                }
+
+                a.back {
+                        color: #ff6b6b;
+                }
+
+                a.back:hover {
+                        color: #ff5252;
+                        text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+                }
+
+                /* 标题区域 */
+                .header {
+                        text-align: center;
+                        margin: 30px 50px 50px;
+                        padding: 40px;
+                        background: rgba(23, 42, 70, 0.8);
+                        border-radius: 15px;
+                        color: white;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(100, 255, 218, 0.1);
+                        position: relative;
+                        overflow: hidden;
+                }
+
+                .header h1 {
+                        font-size: 2.5rem;
+                        margin-bottom: 20px;
+                        color: #64ffda;
+                        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+                        position: relative;
+                        display: inline-block;
+                }
+
+                .header h1::after {
+                        content: '';
+                        position: absolute;
+                        bottom: -10px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        width: 100px;
+                        height: 3px;
+                        background: linear-gradient(90deg, transparent, #64ffda, transparent);
+                }
+
+                .header p {
+                        font-size: 1.1rem;
+                        opacity: 0.9;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        line-height: 1.6;
+                        color: #a8b2d1;
+                }
+
+                /* 仪表板容器 */
+                .dashboard-container {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+                        gap: 30px;
+                        margin: 0 50px 30px;
+                }
+
+                /* 图表卡片样式 */
+                .chart-container {
+                        background: rgba(23, 42, 70, 0.8);
+                        border-radius: 15px;
+                        padding: 25px;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                        transition: transform 0.3s ease, box-shadow 0.3s ease;
+                        border-left: 5px solid #64ffda;
+                        height: 550px;
+                        display: flex;
+                        flex-direction: column;
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(100, 255, 218, 0.1);
+                }
+
+                .chart-container:hover {
+                        transform: translateY(-5px);
+                        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+                        border-left: 5px solid #ff6b6b;
+                }
+
+                .chart-title {
+                        font-size: 1.4rem;
+                        font-weight: 600;
+                        margin-bottom: 20px;
+                        color: #64ffda;
+                        padding-bottom: 15px;
+                        border-bottom: 2px solid rgba(100, 255, 218, 0.2);
+                        display: flex;
+                        align-items: center;
+                        text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+                }
+
+                .chart-title i {
+                        margin-right: 12px;
+                        color: #64ffda;
+                        font-size: 1.6rem;
+                }
+
+                .chart-wrapper {
+                        flex: 1;
+                        min-height: 0;
+                        position: relative;
+                }
+
+                /* Plotly图表样式适配 */
+                .plotly-graph-div {
+                        width: 100% !important;
+                        height: 100% !important;
+                        border-radius: 10px;
+                        background: rgba(10, 25, 47, 0.5) !important;
+                }
+
+                .plotly-graph-div .js-plotly-plot {
+                        background: transparent !important;
+                }
+
+                /* 优化Plotly图表的文字颜色 */
+                .plotly .modebar {
+                        background: rgba(10, 25, 47, 0.8) !important;
+                }
+
+                .plotly .modebar-btn path {
+                        fill: #64ffda !important;
+                }
+
+                .plotly .modebar-btn:hover path {
+                        fill: #ff6b6b !important;
+                }
+
+                /* 洞察区域 */
+                .insights-section {
+                        background: rgba(23, 42, 70, 0.8);
+                        border-radius: 15px;
+                        padding: 30px;
+                        margin: 50px;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(100, 255, 218, 0.1);
+                }
+
+                .insights-title {
+                        font-size: 1.5rem;
+                        font-weight: 600;
+                        margin-bottom: 25px;
+                        color: #64ffda;
+                        display: flex;
+                        align-items: center;
+                        text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+                }
+
+                .insights-title i {
+                        margin-right: 12px;
+                        color: #ff6b6b;
+                        font-size: 1.6rem;
+                }
+
+                .insights-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                        gap: 25px;
+                }
+
+                .insight-card {
+                        background: rgba(17, 34, 64, 0.7);
+                        border-radius: 12px;
+                        padding: 25px;
+                        border-left: 4px solid;
+                        transition: transform 0.3s ease, box-shadow 0.3s ease;
+                        height: 100%;
+                }
+
+                .insight-card:hover {
+                        transform: translateY(-3px);
+                        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+                }
+
+                .insight-card h3 {
+                        font-size: 1.2rem;
+                        margin-bottom: 15px;
+                        color: #64ffda;
+                        display: flex;
+                        align-items: center;
+                }
+
+                .insight-card h3 i {
+                        margin-right: 10px;
+                        font-size: 1.3rem;
+                }
+
+                .insight-card p {
+                        color: #a8b2d1;
+                        line-height: 1.7;
+                        font-size: 0.95rem;
+                }
+
+                .card-1 {
+                        border-color: #3498db;
+                }
+
+                .card-2 {
+                        border-color: #2ecc71;
+                }
+
+                .card-3 {
+                        border-color: #e74c3c;
+                }
+
+                .card-4 {
+                        border-color: #f39c12;
+                }
+
+                /* 页脚 */
+                .footer {
+                        text-align: center;
+                        margin: 40px 50px;
+                        padding: 30px;
+                        color: #7f8c8d;
+                        font-size: 0.9rem;
+                        border-top: 1px solid rgba(100, 255, 218, 0.2);
+                        background: rgba(23, 42, 70, 0.5);
+                        border-radius: 10px;
+                        backdrop-filter: blur(10px);
+                }
+
+                .footer p:first-child {
+                        color: #64ffda;
+                        margin-bottom: 10px;
+                        font-size: 1rem;
+                }
+
+                /* 响应式设计 */
+                @media (max-width: 1300px) {
+                        .dashboard-container {
+                                grid-template-columns: 1fr;
+                                margin: 0 30px 30px;
+                        }
+
+                        .chart-container {
+                                height: 500px;
+                        }
+
+                        .insights-section {
+                                margin: 30px;
+                        }
+
+                        .header {
+                                margin: 20px 30px 40px;
+                                padding: 30px;
+                        }
+                }
+
+                @media (max-width: 768px) {
+                        #daohang {
+                                flex-wrap: wrap;
+                                height: auto;
+                                padding: 10px;
+                                margin: 0 20px 20px;
+                        }
+
+                        #daohang li {
+                                flex: 1 0 33%;
+                                margin: 5px 0;
+                        }
+
+                        .header h1 {
+                                font-size: 2rem;
+                        }
+
+                        .chart-container {
+                                height: 450px;
+                                padding: 20px;
+                        }
+
+                        .chart-title {
+                                font-size: 1.2rem;
+                        }
+
+                        .insights-grid {
+                                grid-template-columns: 1fr;
+                                gap: 20px;
+                        }
+
+                        .dashboard-container,
+                        .insights-section,
+                        .footer,
+                        .header {
+                                margin: 20px;
+                        }
+                }
+
+                /* 滚动条样式 */
+                ::-webkit-scrollbar {
+                        width: 8px;
+                }
+
+                ::-webkit-scrollbar-track {
+                        background: rgba(23, 42, 70, 0.5);
+                        border-radius: 10px;
+                }
+
+                ::-webkit-scrollbar-thumb {
+                        background: rgba(100, 255, 218, 0.3);
+                        border-radius: 10px;
+                }
+
+                ::-webkit-scrollbar-thumb:hover {
+                        background: rgba(100, 255, 218, 0.5);
+                }
+
+                /* 星空效果JavaScript生成 */
+                .stars {
+                        pointer-events: none;
+                }
+
+                /* 加载动画 */
+                @keyframes fadeIn {
+                        from {
+                                opacity: 0;
+                                transform: translateY(20px);
+                        }
+
+                        to {
+                                opacity: 1;
+                                transform: translateY(0);
+                        }
+                }
+
+                .chart-container,
+                .insight-card,
+                .header {
+                        animation: fadeIn 0.6s ease-out forwards;
+                }
+
+                /* 为Plotly图表容器添加悬停效果 */
+                .plotly-graph-div {
+                        transition: all 0.3s ease;
+                }
+
+                .plotly-graph-div:hover {
+                        transform: scale(1.01);
+                }
+        </style>
+        <script type="text/javascript">window.PlotlyConfig = { MathJaxConfig: 'local' };</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.3.0.min.js"
+                integrity="sha256-bO3dS6yCpk9aK4gUpNELtCiDeSYvGYnK7jFI58NQnHI=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+        <div id="background"></div>
+        <div class="stars"></div>
+
+        <!-- 导航栏 -->
+        <ul id="daohang" type="none">
+                <li><a class="daohangTo" href="zhuye.html">首页</a></li>
+                <div class="line1"></div>
+                <li><a class="daohangTo" href="bangdan.html">游戏榜单</a></li>
+                <div class="line1"></div>
+                <li><a class="daohangTo" href="lxfb.html">类型分布</a></li>
+                <div class="line1"></div>
+                <li><a class="daohangTo" href="Trend.html">发布情况</a></li>
+                <div class="line1"></div>
+                <li><a class="daohangTo" href="Player.html">玩家分析</a></li>
+                <div class="line1"></div>
+                <li><a class="daohangTo back" href="Login.html">退出</a></li>
+        </ul>
+
+        <div class="header">
+                <h1><i class="fas fa-gamepad"></i> 游戏评论关键词分析仪表板</h1>
+                <p>基于Steam游戏评论数据的主题建模与情感分析可视化。探索玩家讨论最多的主题、情感倾向及其随时间的变化趋势。</p>
+        </div>
+
+        <div class="dashboard-container">
+                <div class="chart-container">
+                        <div class="chart-title"><i class="fas fa-chart-bar"></i> 前20个高频关键词主题</div>
+                        <div class="chart-wrapper">
+                                <div id="92db67c9-bc7a-44b1-a482-6f387f980bc4" class="plotly-graph-div"
+                                        style="height:100%; width:100%;"></div>
+                        </div>
+                </div>
+
+                <div class="chart-container">
+                        <div class="chart-title"><i class="fas fa-smile"></i><i class="fas fa-frown"></i> 前15个主题情感分布
+                        </div>
+                        <div class="chart-wrapper">
+                                <div id="c71f2384-21db-412f-94b9-25e7016a92fe" class="plotly-graph-div"
+                                        style="height:100%; width:100%;"></div>
+                        </div>
+                </div>
+
+                <div class="chart-container">
+                        <div class="chart-title"><i class="fas fa-chart-line"></i> 前5个主题时间趋势</div>
+                        <div class="chart-wrapper">
+                                <div id="7e46ebab-6d03-463e-8094-8c04ee203cef" class="plotly-graph-div"
+                                        style="height:100%; width:100%;"></div>
+                        </div>
+                </div>
+
+                <div class="chart-container">
+                        <div class="chart-title"><i class="fas fa-fire"></i> 游戏与主题热力图</div>
+                        <div class="chart-wrapper">
+                                <div id="fbb3d9a0-bafc-4980-8be9-7be207141860" class="plotly-graph-div"
+                                        style="height:100%; width:100%;"></div>
+                        </div>
+                </div>
+        </div>
+
+        <div class="insights-section">
+                <div class="insights-title"><i class="fas fa-lightbulb"></i> 关键洞察与发现</div>
+                <div class="insights-grid">
+                        <div class="insight-card card-1">
+                                <h3><i class="fas fa-trophy"></i> 高频主题分析</h3>
+                                <p>"游戏"是讨论最多的主题，其次是"新手包"和"持续不断"。这表明玩家最关注游戏本身的核心体验、新手入门内容以及游戏的持续可玩性。</p>
+                        </div>
+
+                        <div class="insight-card card-2">
+                                <h3><i class="fas fa-thumbs-up"></i> 正面情绪主题</h3>
+                                <p>"合作模式"和"游玩"主题下正面评价较多，说明玩家对多人合作游戏体验和基本游戏性较为满意。</p>
+                        </div>
+
+                        <div class="insight-card card-3">
+                                <h3><i class="fas fa-thumbs-down"></i> 负面情绪主题</h3>
+                                <p>"微交易"、"退款"和"愚蠢"等主题负面评价集中，反映了玩家对游戏内购、退款政策以及某些设计决策的不满。</p>
+                        </div>
+
+                        <div class="insight-card card-4">
+                                <h3><i class="fas fa-chart-line"></i> 时间趋势变化</h3>
+                                <p>部分主题如"新手包"和"免费/早期"的讨论频率随时间有显著变化，可能反映了游戏发布策略和玩家期望的演变。</p>
+                        </div>
+                </div>
+        </div>
+
+        <div class="footer">
+                <p>游戏评论关键词分析仪表板 | 数据来源：Steam游戏评论 | 更新时间：2023年</p>
+                <p>© 2023 游戏数据分析项目 | 可视化工具：Plotly.js</p>
+        </div>
+
+        <!-- 星空效果生成脚本 -->
+        <script>
+                // 星空背景生成
+                const stars = document.querySelector('.stars');
+                for (let i = 0; i < 150; i++) {
+                        const star = document.createElement('div');
+                        star.className = 'star';
+                        star.style.top = Math.random() * 100 + 'vh';
+                        star.style.left = Math.random() * 100 + 'vw';
+                        star.style.width = Math.random() * 3 + 1 + 'px';
+                        star.style.height = star.style.width;
+                        star.style.animationDuration = Math.random() * 3 + 1 + 's';
+                        star.style.animationDelay = Math.random() * 2 + 's';
+                        stars.appendChild(star);
+                }
+        </script>
+
+        <!-- Plotly图表脚本 - 已中文化 -->
+        <script type="text/javascript">
+                window.PLOTLYENV = window.PLOTLYENV || {};
+                if (document.getElementById("92db67c9-bc7a-44b1-a482-6f387f980bc4")) {
+                        Plotly.newPlot("92db67c9-bc7a-44b1-a482-6f387f980bc4", [{
+                                "hovertemplate": "频率=%{marker.color}<br>主题=%{y}<extra></extra>",
+                                "legendgroup": "",
+                                "marker": { "color": { "dtype": "i2", "bdata": "MEcPKJkipR4aHdAYchb4FZYTThM3E7MSQxGeD2QPxQ4wDggNSwxCCw==" }, "coloraxis": "coloraxis", "pattern": { "shape": "" } },
+                                "name": "",
+                                "orientation": "h",
+                                "showlegend": false,
+                                "textposition": "auto",
+                                "x": { "dtype": "i2", "bdata": "MEcPKJkipR4aHdAYchb4FZYTThM3E7MSQxGeD2QPxQ4wDggNSwxCCw==" },
+                                "xaxis": "x",
+                                "y": ["主题1: 游戏", "主题13: 新手包", "主题25: 持续不断", "主题28: 屏幕", "主题24: 免费/早期", "主题3: 类似一半", "主题17: 游玩", "主题9: 愚蠢", "主题10: 合作模式", "主题7: 游戏类型", "主题26: 武器", "主题19: 微交易", "主题21: 大小", "主题5: 仓库", "主题16: 退款", "主题29: 想要", "主题12: 稍后推出", "主题20: 剪贴画", "主题22: 儿童", "主题23: 50-100"],
+                                "yaxis": "y",
+                                "type": "bar"
+                        }], {
+                                "template": {
+                                        "data": {
+                                                "histogram2dcontour": [{ "type": "histogram2dcontour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "choropleth": [{ "type": "choropleth", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "histogram2d": [{ "type": "histogram2d", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "heatmap": [{ "type": "heatmap", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "contourcarpet": [{ "type": "contourcarpet", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "contour": [{ "type": "contour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "surface": [{ "type": "surface", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "mesh3d": [{ "type": "mesh3d", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "scatter": [{ "fillpattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 }, "type": "scatter" }],
+                                                "parcoords": [{ "type": "parcoords", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterpolargl": [{ "type": "scatterpolargl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "bar": [{ "error_x": { "color": "#2a3f5f" }, "error_y": { "color": "#2a3f5f" }, "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "bar" }],
+                                                "scattergeo": [{ "type": "scattergeo", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterpolar": [{ "type": "scatterpolar", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "histogram": [{ "marker": { "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "histogram" }],
+                                                "scattergl": [{ "type": "scattergl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatter3d": [{ "type": "scatter3d", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } }, "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattermap": [{ "type": "scattermap", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattermapbox": [{ "type": "scattermapbox", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterternary": [{ "type": "scatterternary", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattercarpet": [{ "type": "scattercarpet", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "carpet": [{ "aaxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "baxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "type": "carpet" }],
+                                                "table": [{ "cells": { "fill": { "color": "#EBF0F8" }, "line": { "color": "white" } }, "header": { "fill": { "color": "#C8D4E3" }, "line": { "color": "white" } }, "type": "table" }],
+                                                "barpolar": [{ "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "barpolar" }],
+                                                "pie": [{ "automargin": true, "type": "pie" }]
+                                        },
+                                        "layout": {
+                                                "autotypenumbers": "strict",
+                                                "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"],
+                                                "font": { "color": "#2a3f5f" },
+                                                "hovermode": "closest",
+                                                "hoverlabel": { "align": "left" },
+                                                "paper_bgcolor": "white",
+                                                "plot_bgcolor": "white",
+                                                "polar": { "bgcolor": "white", "angularaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" }, "radialaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" } },
+                                                "ternary": { "bgcolor": "white", "aaxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "baxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "caxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" } },
+                                                "coloraxis": { "colorbar": { "outlinewidth": 0, "ticks": "" } },
+                                                "colorscale": { "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]] },
+                                                "xaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                                                "yaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                                                "scene": { "xaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "yaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "zaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 } },
+                                                "shapedefaults": { "line": { "color": "#2a3f5f" } },
+                                                "annotationdefaults": { "arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1 },
+                                                "geo": { "bgcolor": "white", "landcolor": "white", "subunitcolor": "#C8D4E3", "showland": true, "showlakes": true, "lakecolor": "white" },
+                                                "title": { "x": 0.05 },
+                                                "mapbox": { "style": "light" }
+                                        }
+                                },
+                                "xaxis": { "anchor": "y", "domain": [0.0, 1.0], "title": { "text": "频率" } },
+                                "yaxis": { "anchor": "x", "domain": [0.0, 1.0], "title": { "text": "主题" }, "categoryorder": "total ascending" },
+                                "coloraxis": { "colorbar": { "title": { "text": "频率" } }, "colorscale": [[0.0, "rgb(247,251,255)"], [0.125, "rgb(222,235,247)"], [0.25, "rgb(198,219,239)"], [0.375, "rgb(158,202,225)"], [0.5, "rgb(107,174,214)"], [0.625, "rgb(66,146,198)"], [0.75, "rgb(33,113,181)"], [0.875, "rgb(8,81,156)"], [1.0, "rgb(8,48,107)"]] },
+                                "legend": { "tracegroupgap": 0 },
+                                "title": { "text": "前20个高频关键词主题分布" },
+                                "barmode": "relative"
+                        }, { "responsive": true });
+                }           
+        </script>
+
+        <script type="text/javascript">
+                window.PLOTLYENV = window.PLOTLYENV || {};
+                if (document.getElementById("c71f2384-21db-412f-94b9-25e7016a92fe")) {
+                        Plotly.newPlot("c71f2384-21db-412f-94b9-25e7016a92fe", [{
+                                "hovertemplate": "情感标签=负面<br>频率=%{x}<br>主题=%{y}<extra></extra>",
+                                "legendgroup": "负面",
+                                "marker": { "color": "#DC143C", "pattern": { "shape": "" } },
+                                "name": "负面",
+                                "orientation": "h",
+                                "showlegend": true,
+                                "textposition": "auto",
+                                "x": { "dtype": "i2", "bdata": "0gZpD70JLAkZCKweEQfqDHYPzAgYEYQIpQXwBXgJ" },
+                                "xaxis": "x",
+                                "y": ["主题10: 合作模式", "主题13: 新手包", "主题16: 退款", "主题17: 游玩", "主题19: 微交易", "主题1: 游戏", "主题21: 大小", "主题24: 免费/早期", "主题25: 持续不断", "主题26: 武器", "主题28: 屏幕", "主题3: 类似一半", "主题5: 仓库", "主题7: 游戏类型", "主题9: 愚蠢"],
+                                "yaxis": "y",
+                                "type": "bar"
+                        },
+                        {
+                                "hovertemplate": "情感标签=正面<br>频率=%{x}<br>主题=%{y}<extra></extra>",
+                                "legendgroup": "正面",
+                                "marker": { "color": "#2E8B57", "pattern": { "shape": "" } },
+                                "name": "正面",
+                                "orientation": "h",
+                                "showlegend": true,
+                                "textposition": "auto",
+                                "x": { "dtype": "i2", "bdata": "xAymGKcFRg2aCoQoMgowECMTawqNDUwQ+QleDYAM" },
+                                "xaxis": "x",
+                                "y": ["主题10: 合作模式", "主题13: 新手包", "主题16: 退款", "主题17: 游玩", "主题19: 微交易", "主题1: 游戏", "主题21: 大小", "主题24: 免费/早期", "主题25: 持续不断", "主题26: 武器", "主题28: 屏幕", "主题3: 类似一半", "主题5: 仓库", "主题7: 游戏类型", "主题9: 愚蠢"],
+                                "yaxis": "y",
+                                "type": "bar"
+                        }], {
+                                "template": {
+                                        "data": {
+                                                "histogram2dcontour": [{ "type": "histogram2dcontour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "choropleth": [{ "type": "choropleth", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "histogram2d": [{ "type": "histogram2d", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "heatmap": [{ "type": "heatmap", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "contourcarpet": [{ "type": "contourcarpet", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "contour": [{ "type": "contour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "surface": [{ "type": "surface", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "mesh3d": [{ "type": "mesh3d", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "scatter": [{ "fillpattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 }, "type": "scatter" }],
+                                                "parcoords": [{ "type": "parcoords", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterpolargl": [{ "type": "scatterpolargl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "bar": [{ "error_x": { "color": "#2a3f5f" }, "error_y": { "color": "#2a3f5f" }, "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "bar" }],
+                                                "scattergeo": [{ "type": "scattergeo", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterpolar": [{ "type": "scatterpolar", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "histogram": [{ "marker": { "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "histogram" }],
+                                                "scattergl": [{ "type": "scattergl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatter3d": [{ "type": "scatter3d", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } }, "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattermap": [{ "type": "scattermap", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattermapbox": [{ "type": "scattermapbox", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterternary": [{ "type": "scatterternary", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattercarpet": [{ "type": "scattercarpet", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "carpet": [{ "aaxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "baxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "type": "carpet" }],
+                                                "table": [{ "cells": { "fill": { "color": "#EBF0F8" }, "line": { "color": "white" } }, "header": { "fill": { "color": "#C8D4E3" }, "line": { "color": "white" } }, "type": "table" }],
+                                                "barpolar": [{ "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "barpolar" }],
+                                                "pie": [{ "automargin": true, "type": "pie" }]
+                                        },
+                                        "layout": {
+                                                "autotypenumbers": "strict",
+                                                "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"],
+                                                "font": { "color": "#2a3f5f" },
+                                                "hovermode": "closest",
+                                                "hoverlabel": { "align": "left" },
+                                                "paper_bgcolor": "white",
+                                                "plot_bgcolor": "white",
+                                                "polar": { "bgcolor": "white", "angularaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" }, "radialaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" } },
+                                                "ternary": { "bgcolor": "white", "aaxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "baxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "caxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" } },
+                                                "coloraxis": { "colorbar": { "outlinewidth": 0, "ticks": "" } },
+                                                "colorscale": { "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]] },
+                                                "xaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                                                "yaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                                                "scene": { "xaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "yaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "zaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 } },
+                                                "shapedefaults": { "line": { "color": "#2a3f5f" } },
+                                                "annotationdefaults": { "arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1 },
+                                                "geo": { "bgcolor": "white", "landcolor": "white", "subunitcolor": "#C8D4E3", "showland": true, "showlakes": true, "lakecolor": "white" },
+                                                "title": { "x": 0.05 },
+                                                "mapbox": { "style": "light" }
+                                        }
+                                },
+                                "xaxis": { "anchor": "y", "domain": [0.0, 1.0], "title": { "text": "频率" } },
+                                "yaxis": { "anchor": "x", "domain": [0.0, 1.0], "title": { "text": "主题" }, "categoryorder": "total ascending" },
+                                "legend": { "title": { "text": "情感标签" }, "tracegroupgap": 0 },
+                                "title": { "text": "前15个主题的情感分布对比" },
+                                "barmode": "relative"
+                        }, { "responsive": true });
+                }           
+        </script>
+
+        <script type="text/javascript">
+                window.PLOTLYENV = window.PLOTLYENV || {};
+                if (document.getElementById("7e46ebab-6d03-463e-8094-8c04ee203cef")) {
+                        Plotly.newPlot("7e46ebab-6d03-463e-8094-8c04ee203cef", [{
+                                "hovertemplate": "主题=主题13: 新手包<br>年份=%{x}<br>频率=%{y}<extra></extra>",
+                                "legendgroup": "主题13: 新手包",
+                                "line": { "color": "#636efa", "dash": "solid" },
+                                "marker": { "symbol": "circle" },
+                                "mode": "lines+markers",
+                                "name": "主题13: 新手包",
+                                "orientation": "v",
+                                "showlegend": true,
+                                "x": { "dtype": "i2", "bdata": "2wfcB90H3gffB+AH4QfiBw==" },
+                                "xaxis": "x",
+                                "y": { "dtype": "i2", "bdata": "BAAXAI0ACgIWBP0H7QtdDQ==" },
+                                "yaxis": "y",
+                                "type": "scatter"
+                        },
+                        {
+                                "hovertemplate": "主题=主题1: 游戏<br>年份=%{x}<br>频率=%{y}<extra></extra>",
+                                "legendgroup": "主题1: 游戏",
+                                "line": { "color": "#EF553B", "dash": "solid" },
+                                "marker": { "symbol": "circle" },
+                                "mode": "lines+markers",
+                                "name": "主题1: 游戏",
+                                "orientation": "v",
+                                "showlegend": true,
+                                "x": { "dtype": "i2", "bdata": "2wfcB90H3gffB+AH4QfiBw==" },
+                                "xaxis": "x",
+                                "y": { "dtype": "i2", "bdata": "DQBBADEB\u002fgXcCQ0RfxBLFA==" },
+                                "yaxis": "y",
+                                "type": "scatter"
+                        },
+                        {
+                                "hovertemplate": "主题=主题24: 免费/早期<br>年份=%{x}<br>频率=%{y}<extra></extra>",
+                                "legendgroup": "主题24: 免费/早期",
+                                "line": { "color": "#00cc96", "dash": "solid" },
+                                "marker": { "symbol": "circle" },
+                                "mode": "lines+markers",
+                                "name": "主题24: 免费/早期",
+                                "orientation": "v",
+                                "showlegend": true,
+                                "x": { "dtype": "i2", "bdata": "2wfcB90H3gffB+AH4QfiBw==" },
+                                "xaxis": "x",
+                                "y": { "dtype": "i2", "bdata": "EQA0AK4A7wI1BI8HQwYxBw==" },
+                                "yaxis": "y",
+                                "type": "scatter"
+                        },
+                        {
+                                "hovertemplate": "主题=主题25: 持续不断<br>年份=%{x}<br>频率=%{y}<extra></extra>",
+                                "legendgroup": "主题25: 持续不断",
+                                "line": { "color": "#ab63fa", "dash": "solid" },
+                                "marker": { "symbol": "circle" },
+                                "mode": "lines+markers",
+                                "name": "主题25: 持续不断",
+                                "orientation": "v",
+                                "showlegend": true,
+                                "x": { "dtype": "i2", "bdata": "2wfcB90H3gffB+AH4QfiBw==" },
+                                "xaxis": "x",
+                                "y": { "dtype": "i2", "bdata": "AwAgAI0AQAMGBbQI9wf4CA==" },
+                                "yaxis": "y",
+                                "type": "scatter"
+                        },
+                        {
+                                "hovertemplate": "主题=主题28: 屏幕<br>年份=%{x}<br>频率=%{y}<extra></extra>",
+                                "legendgroup": "主题28: 屏幕",
+                                "line": { "color": "#FFA15A", "dash": "solid" },
+                                "marker": { "symbol": "circle" },
+                                "mode": "lines+markers",
+                                "name": "主题28: 屏幕",
+                                "orientation": "v",
+                                "showlegend": true,
+                                "x": { "dtype": "i2", "bdata": "2wfcB90H3gffB+AH4QfiBw==" },
+                                "xaxis": "x",
+                                "y": { "dtype": "i2", "bdata": "AgAKADcAYAFnBLoHGwbGCg==" },
+                                "yaxis": "y",
+                                "type": "scatter"
+                        }], {
+                                "template": {
+                                        "data": {
+                                                "histogram2dcontour": [{ "type": "histogram2dcontour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "choropleth": [{ "type": "choropleth", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "histogram2d": [{ "type": "histogram2d", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "heatmap": [{ "type": "heatmap", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "contourcarpet": [{ "type": "contourcarpet", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "contour": [{ "type": "contour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "surface": [{ "type": "surface", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "mesh3d": [{ "type": "mesh3d", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "scatter": [{ "fillpattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 }, "type": "scatter" }],
+                                                "parcoords": [{ "type": "parcoords", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterpolargl": [{ "type": "scatterpolargl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "bar": [{ "error_x": { "color": "#2a3f5f" }, "error_y": { "color": "#2a3f5f" }, "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "bar" }],
+                                                "scattergeo": [{ "type": "scattergeo", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterpolar": [{ "type": "scatterpolar", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "histogram": [{ "marker": { "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "histogram" }],
+                                                "scattergl": [{ "type": "scattergl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatter3d": [{ "type": "scatter3d", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } }, "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattermap": [{ "type": "scattermap", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattermapbox": [{ "type": "scattermapbox", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterternary": [{ "type": "scatterternary", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattercarpet": [{ "type": "scattercarpet", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "carpet": [{ "aaxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "baxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "type": "carpet" }],
+                                                "table": [{ "cells": { "fill": { "color": "#EBF0F8" }, "line": { "color": "white" } }, "header": { "fill": { "color": "#C8D4E3" }, "line": { "color": "white" } }, "type": "table" }],
+                                                "barpolar": [{ "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "barpolar" }],
+                                                "pie": [{ "automargin": true, "type": "pie" }]
+                                        },
+                                        "layout": {
+                                                "autotypenumbers": "strict",
+                                                "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"],
+                                                "font": { "color": "#2a3f5f" },
+                                                "hovermode": "closest",
+                                                "hoverlabel": { "align": "left" },
+                                                "paper_bgcolor": "white",
+                                                "plot_bgcolor": "white",
+                                                "polar": { "bgcolor": "white", "angularaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" }, "radialaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" } },
+                                                "ternary": { "bgcolor": "white", "aaxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "baxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "caxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" } },
+                                                "coloraxis": { "colorbar": { "outlinewidth": 0, "ticks": "" } },
+                                                "colorscale": { "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]] },
+                                                "xaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                                                "yaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                                                "scene": { "xaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "yaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "zaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 } },
+                                                "shapedefaults": { "line": { "color": "#2a3f5f" } },
+                                                "annotationdefaults": { "arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1 },
+                                                "geo": { "bgcolor": "white", "landcolor": "white", "subunitcolor": "#C8D4E3", "showland": true, "showlakes": true, "lakecolor": "white" },
+                                                "title": { "x": 0.05 },
+                                                "mapbox": { "style": "light" }
+                                        }
+                                },
+                                "xaxis": { "anchor": "y", "domain": [0.0, 1.0], "title": { "text": "年份" } },
+                                "yaxis": { "anchor": "x", "domain": [0.0, 1.0], "title": { "text": "频率" } },
+                                "legend": { "title": { "text": "主题" }, "tracegroupgap": 0 },
+                                "title": { "text": "前5个主题随时间的趋势变化" }
+                        }, { "responsive": true });
+                }           
+        </script>
+
+        <script type="text/javascript">
+                window.PLOTLYENV = window.PLOTLYENV || {};
+                if (document.getElementById("fbb3d9a0-bafc-4980-8be9-7be207141860")) {
+                        Plotly.newPlot("fbb3d9a0-bafc-4980-8be9-7be207141860", [{
+                                "coloraxis": "coloraxis",
+                                "name": "0",
+                                "x": ["AdventureQuest 3D", "Bless Online", "Eternal Card Game", "Fractured Space", "Heroes & Generals", "Neverwinter", "Robocraft", "The Elder Scrolls®: Legends™", "War Thunder", "theHunter Classic"],
+                                "y": ["主题10: 合作模式", "主题13: 新手包", "主题17: 游玩", "主题1: 游戏", "主题24: 免费/早期", "主题25: 持续不断", "主题28: 屏幕", "主题3: 类似一半", "主题7: 游戏类型", "主题9: 愚蠢"],
+                                "z": { "dtype": "i2", "bdata": "vgCYAJEAmABOAWgAdQBVAF0BIgAuAoYBkAZZAcMAZwBHAVkEUgAcAFUAewBqAbUAJQH6AKAApgDDANcASALvAjQDywIEAyICTgOKAroCBgKEANAAgACaANgASwHBAfcA5QGnADEBOAHzAE4B7gFjAYgBFAEZAesAcwGqAssATwFVAb8A3QGfALAAUQDQABcBwADiAOMA4wDMAIsAygCyALoAvwBlAYwAbQD2AFQACgFiAEMApgAQAakAkAAUAcMA\u002fwCbAMQAVwA=", "shape": "10, 10" },
+                                "type": "heatmap",
+                                "xaxis": "x",
+                                "yaxis": "y",
+                                "hovertemplate": "游戏名称: %{x}<br>主题: %{y}<br>频率: %{z}<extra></extra>"
+                        }], {
+                                "template": {
+                                        "data": {
+                                                "histogram2dcontour": [{ "type": "histogram2dcontour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "choropleth": [{ "type": "choropleth", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "histogram2d": [{ "type": "histogram2d", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "heatmap": [{ "type": "heatmap", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "contourcarpet": [{ "type": "contourcarpet", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "contour": [{ "type": "contour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "surface": [{ "type": "surface", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                                                "mesh3d": [{ "type": "mesh3d", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                                                "scatter": [{ "fillpattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 }, "type": "scatter" }],
+                                                "parcoords": [{ "type": "parcoords", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterpolargl": [{ "type": "scatterpolargl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "bar": [{ "error_x": { "color": "#2a3f5f" }, "error_y": { "color": "#2a3f5f" }, "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "bar" }],
+                                                "scattergeo": [{ "type": "scattergeo", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterpolar": [{ "type": "scatterpolar", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "histogram": [{ "marker": { "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "histogram" }],
+                                                "scattergl": [{ "type": "scattergl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatter3d": [{ "type": "scatter3d", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } }, "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattermap": [{ "type": "scattermap", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattermapbox": [{ "type": "scattermapbox", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scatterternary": [{ "type": "scatterternary", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "scattercarpet": [{ "type": "scattercarpet", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                                                "carpet": [{ "aaxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "baxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "type": "carpet" }],
+                                                "table": [{ "cells": { "fill": { "color": "#EBF0F8" }, "line": { "color": "white" } }, "header": { "fill": { "color": "#C8D4E3" }, "line": { "color": "white" } }, "type": "table" }],
+                                                "barpolar": [{ "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "barpolar" }],
+                                                "pie": [{ "automargin": true, "type": "pie" }]
+                                        },
+                                        "layout": {
+                                                "autotypenumbers": "strict",
+                                                "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"],
+                                                "font": { "color": "#2a3f5f" },
+                                                "hovermode": "closest",
+                                                "hoverlabel": { "align": "left" },
+                                                "paper_bgcolor": "white",
+                                                "plot_bgcolor": "white",
+                                                "polar": { "bgcolor": "white", "angularaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" }, "radialaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" } },
+                                                "ternary": { "bgcolor": "white", "aaxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "baxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "caxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" } },
+                                                "coloraxis": { "colorbar": { "outlinewidth": 0, "ticks": "" } },
+                                                "colorscale": { "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]] },
+                                                "xaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                                                "yaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                                                "scene": { "xaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "yaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "zaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 } },
+                                                "shapedefaults": { "line": { "color": "#2a3f5f" } },
+                                                "annotationdefaults": { "arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1 },
+                                                "geo": { "bgcolor": "white", "landcolor": "white", "subunitcolor": "#C8D4E3", "showland": true, "showlakes": true, "lakecolor": "white" },
+                                                "title": { "x": 0.05 },
+                                                "mapbox": { "style": "light" }
+                                        }
+                                },
+                                "xaxis": { "anchor": "y", "domain": [0.0, 1.0], "title": { "text": "游戏名称" }, "side": "bottom" },
+                                "yaxis": { "anchor": "x", "domain": [0.0, 1.0], "autorange": "reversed", "title": { "text": "主题" } },
+                                "coloraxis": { "colorbar": { "title": { "text": "频率" } }, "colorscale": [[0.0, "rgb(255,255,204)"], [0.125, "rgb(255,237,160)"], [0.25, "rgb(254,217,118)"], [0.375, "rgb(254,178,76)"], [0.5, "rgb(253,141,60)"], [0.625, "rgb(252,78,42)"], [0.75, "rgb(227,26,28)"], [0.875, "rgb(189,0,38)"], [1.0, "rgb(128,0,38)"]] },
+                                "title": { "text": "关键词主题热力图：前10个游戏 vs 前10个主题" }
+                        }, { "responsive": true });
+                }           
+        </script>
+</body>
+
+</html>

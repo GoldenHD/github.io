@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 游戏市场分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* 背景和星空效果 */
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(10, 25, 47, 0.9), rgba(10, 25, 47, 0.9)), url("https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80");
+            background-size: cover;
+            background-position: center;
+            opacity: 0.7;
+            z-index: -2;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 1s infinite;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin: 300px auto
+        }
+
+        .form-box {
+            width: 400px;
+            padding: 40px;
+            background: rgba(23, 42, 70, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            position: relative;
+            z-index: 10;
+        }
+
+        h2 {
+            text-align: center;
+            color: #64ffda;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccd6f6;
+            font-weight: 500;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(10, 25, 47, 0.7);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="password"]:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .form-group button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #64ffda 0%, #00b894 100%);
+            color: #0a192f;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .form-group button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.4);
+        }
+
+        .form-links {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .form-links a {
+            color: #64ffda;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .form-links a:hover {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+
+        .separator {
+            color: #8892b0;
+            margin: 0 5px;
+        }
+
+        .error-message {
+            background: rgba(220, 53, 69, 0.8);
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+            border: 1px solid rgba(220, 53, 69, 0.5);
+        }
+
+        /* 模态框样式 */
+        .psw-model {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .forgetedpsw-model {
+            position: relative;
+            background: rgba(23, 42, 70, 0.95);
+            margin: 15% auto;
+            padding: 40px;
+            border-radius: 15px;
+            width: 400px;
+            text-align: center;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .forgetedpsw-model p {
+            text-align: center;
+            color: #64ffda;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .close {
+            position: absolute;
+            color: #8892b0;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #64ffda;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 10px 25px;
+            background: rgba(100, 255, 218, 0.1);
+            color: #64ffda;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .action-btn:hover {
+            background: rgba(100, 255, 218, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.2);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .form-box {
+                width: 90%;
+                padding: 30px 20px;
+                margin: 20px;
+            }
+
+            .forgetedpsw-model {
+                width: 90%;
+                margin: 20% auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="background"></div>
+    <div class="stars"></div>
+
+    <div class="container">
+        <div class="form-box">
+            <form id="form-login">
+                <h2>用户登录</h2>
+                <div class="error-message" id="errorMessage"></div>
+
+                <div class="form-group">
+                    <label for="login-username">用户名:</label>
+                    <input type="text" id="login-username" required placeholder="请输入用户名">
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">密码:</label>
+                    <input type="password" id="login-password" required placeholder="请输入密码">
+                </div>
+
+                <div class="form-group">
+                    <button type="submit">登录</button>
+                </div>
+
+                <div class="form-links">
+                    <a id="forgetPassword" href="#">忘记密码？</a>
+                    <span class="separator">|</span>
+                    <a href="register.html">新用户注册</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 忘记密码模态框 -->
+    <div id="changepswModel" class="psw-model">
+        <div class="forgetedpsw-model">
+            <span class="close">&times;</span>
+            <p>密码重置</p>
+            <p style="color: #8892b0; font-size: 14px; margin-bottom: 25px;">请联系管理员或重新注册账户</p>
+            <a href="register.html" class="action-btn">立即注册</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        // 星空背景生成
+        const stars = document.querySelector('.stars');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.top = Math.random() * 100 + 'vh';
+            star.style.left = Math.random() * 100 + 'vw';
+            star.style.width = Math.random() * 3 + 1 + 'px';
+            star.style.height = star.style.width;
+            star.style.animationDuration = Math.random() * 3 + 1 + 's';
+            star.style.animationDelay = Math.random() * 2 + 's';
+            stars.appendChild(star);
+        }
+
+        // 忘记密码模态框控制
+        var forgetPassword = document.getElementById("forgetPassword");
+        var changeModel = document.getElementById("changepswModel");
+        var pswcloseBtn = document.getElementsByClassName("close")[0];
+
+        forgetPassword.onclick = function () {
+            changeModel.style.display = "block";
+        }
+
+        pswcloseBtn.onclick = function () {
+            changeModel.style.display = "none";
+        }
+
+        window.onclick = function (event) {
+            if (event.target == changeModel) {
+                changeModel.style.display = "none";
+            }
+        }
+
+        // 登录表单处理
+        const loginForm = document.getElementById('form-login');
+        const errorMessage = document.getElementById('errorMessage');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const userAccount = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            // 简单的客户端验证
+            if (!userAccount || !password) {
+                showError('请输入用户名和密码');
+                return;
+            }
+
+            try {
+                const response = await axios.post('http://47.109.22.23:8080/login', {
+                    userAccount,
+                    password
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.data.code == 1) {
+                    // 登录成功
+                    window.location.href = "zhuye.html";
+                } else {
+                    showError(response.data.msg || '登录失败，请检查凭证');
+                }
+            } catch (error) {
+                let errorMessageText = '登录失败，请稍后重试';
+                if (error.response) {
+                    errorMessageText = error.response.data.message || '服务器返回错误';
+                } else if (error.request) {
+                    errorMessageText = '网络连接失败，请检查网络';
+                } else {
+                    errorMessageText = error.message;
+                }
+                showError(errorMessageText);
+            }
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // 添加输入框焦点效果
+        const inputs = document.querySelectorAll('input[type="text"], input[type="password"]');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function () {
+                this.style.background = 'rgba(10, 25, 47, 0.9)';
+            });
+
+            input.addEventListener('blur', function () {
+                this.style.background = 'rgba(10, 25, 47, 0.7)';
+            });
+        });
+    </script>
+</body>
+
+</html>

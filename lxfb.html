@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>类型分布-游戏市场分析</title>
+    <link rel="stylesheet" href="css/lxfb.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- 引入ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+
+<body>
+    <div id="background"></div>
+    <div class="stars"></div>
+
+    <ul id="daohang" type="none">
+        <li><a class="daohangTo" href="bangdan.html">游戏榜单</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="lxfb.html">类型分布</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="zhuye.html">首页</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Trend.html">发布情况</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Player.html">玩家</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Ai.html">AI分析</a></li>
+        <div class="line1"></div>
+        <li><a class="back daohangTo" href="Login.html">退出</a></li>
+    </ul>
+
+    <h1 class="page-title">游戏类型分布分析</h1>
+
+    <div id="zuo">
+        <div id="top">
+            <ul class="time" type="none">
+                <li><input type="button" onclick="change1()" value="2005" class="btn"></li>
+                <li><input type="button" onclick="change2()" value="2006" class="btn"></li>
+                <li><input type="button" onclick="change3()" value="2007" class="btn"></li>
+                <li><input type="button" onclick="change4()" value="2008" class="btn"></li>
+                <li><input type="button" onclick="change5()" value="2009" class="btn"></li>
+                <li><input type="button" onclick="change6()" value="2010" class="btn"></li>
+                <li><input type="button" onclick="change7()" value="2011" class="btn"></li>
+                <li><input type="button" onclick="change8()" value="2012" class="btn"></li>
+                <li><input type="button" onclick="change9()" value="2013" class="btn"></li>
+                <li><input type="button" onclick="change10()" value="2014" class="btn"></li>
+            </ul>
+            <div class="time-divider"></div>
+            <ul class="time" type="none">
+                <li><input type="button" onclick="change11()" value="2015" class="btn"></li>
+                <li><input type="button" onclick="change12()" value="2016" class="btn"></li>
+                <li><input type="button" onclick="change13()" value="2017" class="btn"></li>
+                <li><input type="button" onclick="change14()" value="2018" class="btn"></li>
+                <li><input type="button" onclick="change15()" value="2019" class="btn"></li>
+                <li><input type="button" onclick="change16()" value="2020" class="btn"></li>
+                <li><input type="button" onclick="change17()" value="2021" class="btn"></li>
+                <li><input type="button" onclick="change18()" value="2022" class="btn"></li>
+                <li><input type="button" onclick="change19()" value="2023" class="btn"></li>
+                <li><input type="button" onclick="change20()" value="2024" class="btn"></li>
+            </ul>
+        </div>
+        <div id="bottom">
+            <div id="switch">
+                <div id="zhexiantu"><input type="button" onclick="switch1()" value="折线图" class="btn1"></div>
+                <div id="zhuzhuangtu"><input type="button" onclick="switch2()" value="柱状图" class="btn1"></div>
+            </div>
+            <div id="table">
+                <!-- 改为div容器用于ECharts -->
+                <div id="chart-container" style="width: 100%; height: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/lxfb.js"></script>
+</body>
+
+</html>

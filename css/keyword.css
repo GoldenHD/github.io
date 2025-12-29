@@ -1,0 +1,486 @@
+/* keyword_visualization.css */
+/* 基于zhuye.css样式优化关键词分析仪表板 */
+
+/* 基础样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding: 0;
+}
+
+/* 背景和星空效果 */
+#background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(rgba(10, 25, 47, 0.9), rgba(10, 25, 47, 0.9)), url("https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80");
+    background-size: cover;
+    background-position: center;
+    opacity: 0.7;
+    z-index: -2;
+}
+
+.stars {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+.star {
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle 1s infinite;
+}
+
+@keyframes twinkle {
+    0% {
+        opacity: 0;
+        transform: scale(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0);
+    }
+}
+
+/* 导航栏 */
+#daohang {
+    display: flex;
+    height: 70px;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10, 25, 47, 0.9);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    padding: 0 50px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+    margin-bottom: 30px;
+}
+
+#daohang li {
+    align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+#daohang li:hover {
+    background: rgba(100, 255, 218, 0.1);
+}
+
+.line1 {
+    display: inline-block;
+    height: 30px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+a.daohangTo {
+    color: #ccd6f6;
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-align: center;
+}
+
+a.daohangTo:hover {
+    color: #64ffda;
+    text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+}
+
+a.back {
+    color: #ff6b6b;
+}
+
+a.back:hover {
+    color: #ff5252;
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
+
+/* 标题区域 */
+.header {
+    text-align: center;
+    margin: 30px 50px 50px;
+    padding: 40px;
+    background: rgba(23, 42, 70, 0.8);
+    border-radius: 15px;
+    color: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(100, 255, 218, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #64ffda;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+    display: inline-block;
+}
+
+.header h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #64ffda, transparent);
+}
+
+.header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+    color: #a8b2d1;
+}
+
+/* 仪表板容器 */
+.dashboard-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 30px;
+    margin: 0 50px 30px;
+}
+
+/* 图表卡片样式 */
+.chart-container {
+    background: rgba(23, 42, 70, 0.8);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 5px solid #64ffda;
+    height: 550px;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(100, 255, 218, 0.1);
+}
+
+.chart-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    border-left: 5px solid #ff6b6b;
+}
+
+.chart-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #64ffda;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(100, 255, 218, 0.2);
+    display: flex;
+    align-items: center;
+    text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+}
+
+.chart-title i {
+    margin-right: 12px;
+    color: #64ffda;
+    font-size: 1.6rem;
+}
+
+.chart-wrapper {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+}
+
+/* Plotly图表样式适配 */
+.plotly-graph-div {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 10px;
+    background: rgba(10, 25, 47, 0.5) !important;
+}
+
+.plotly-graph-div .js-plotly-plot {
+    background: transparent !important;
+}
+
+/* 优化Plotly图表的文字颜色 */
+.plotly .modebar {
+    background: rgba(10, 25, 47, 0.8) !important;
+}
+
+.plotly .modebar-btn path {
+    fill: #64ffda !important;
+}
+
+.plotly .modebar-btn:hover path {
+    fill: #ff6b6b !important;
+}
+
+/* 修改Plotly图表的默认文字颜色 */
+.plotly .xtick text,
+.plotly .ytick text,
+.plotly .gtitle,
+.plotly .xtitle,
+.plotly .ytitle {
+    fill: #ccd6f6 !important;
+    color: #ccd6f6 !important;
+}
+
+.plotly .legendtext {
+    fill: #ccd6f6 !important;
+    color: #ccd6f6 !important;
+}
+
+/* 洞察区域 */
+.insights-section {
+    background: rgba(23, 42, 70, 0.8);
+    border-radius: 15px;
+    padding: 30px;
+    margin: 50px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(100, 255, 218, 0.1);
+}
+
+.insights-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: #64ffda;
+    display: flex;
+    align-items: center;
+    text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+}
+
+.insights-title i {
+    margin-right: 12px;
+    color: #ff6b6b;
+    font-size: 1.6rem;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.insight-card {
+    background: rgba(17, 34, 64, 0.7);
+    border-radius: 12px;
+    padding: 25px;
+    border-left: 4px solid;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+.insight-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.insight-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #64ffda;
+    display: flex;
+    align-items: center;
+}
+
+.insight-card h3 i {
+    margin-right: 10px;
+    font-size: 1.3rem;
+}
+
+.insight-card p {
+    color: #a8b2d1;
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+.card-1 {
+    border-color: #3498db;
+}
+
+.card-2 {
+    border-color: #2ecc71;
+}
+
+.card-3 {
+    border-color: #e74c3c;
+}
+
+.card-4 {
+    border-color: #f39c12;
+}
+
+/* 页脚 */
+.footer {
+    text-align: center;
+    margin: 40px 50px;
+    padding: 30px;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    border-top: 1px solid rgba(100, 255, 218, 0.2);
+    background: rgba(23, 42, 70, 0.5);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.footer p:first-child {
+    color: #64ffda;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 1300px) {
+    .dashboard-container {
+        grid-template-columns: 1fr;
+        margin: 0 30px 30px;
+    }
+
+    .chart-container {
+        height: 500px;
+    }
+
+    .insights-section {
+        margin: 30px;
+    }
+
+    .header {
+        margin: 20px 30px 40px;
+        padding: 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    #daohang {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 10px;
+        margin: 0 20px 20px;
+    }
+
+    #daohang li {
+        flex: 1 0 33%;
+        margin: 5px 0;
+    }
+
+    .header h1 {
+        font-size: 2rem;
+    }
+
+    .chart-container {
+        height: 450px;
+        padding: 20px;
+    }
+
+    .chart-title {
+        font-size: 1.2rem;
+    }
+
+    .insights-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .dashboard-container,
+    .insights-section,
+    .footer,
+    .header {
+        margin: 20px;
+    }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(23, 42, 70, 0.5);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(100, 255, 218, 0.3);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 255, 218, 0.5);
+}
+
+/* 星空效果JavaScript生成 */
+.stars {
+    pointer-events: none;
+}
+
+/* 添加分隔线样式 */
+hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(100, 255, 218, 0.5), transparent);
+    margin: 20px 0;
+}
+
+/* 加载动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chart-container,
+.insight-card,
+.header {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* 为Plotly图表容器添加悬停效果 */
+.plotly-graph-div {
+    transition: all 0.3s ease;
+}
+
+.plotly-graph-div:hover {
+    transform: scale(1.01);
+}

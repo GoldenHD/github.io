@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏数据深度分析终端</title>
+
+    <!-- 引入库 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/echarts/dist/echarts.min.js"></script>
+
+    <!-- 引入星空效果CSS -->
+    <link rel="stylesheet" href="css/lxfb.css">
+
+    <style>
+        :root {
+            --primary-color: #64ffda;
+            --secondary-color: #0f3460;
+            --bg-color: #0a192f;
+            --card-bg: rgba(23, 42, 70, 0.8);
+            --border-color: rgba(100, 255, 218, 0.2);
+            --text-color: #ccd6f6;
+            --text-secondary: #8892b0;
+            --danger-color: #ff6b6b;
+            --success-color: #64ffda;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(10, 25, 47, 0.9), rgba(10, 25, 47, 0.9)), url("https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80");
+            background-size: cover;
+            background-position: center;
+            opacity: 0.7;
+            z-index: -2;
+        }
+
+        /* 星空背景 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 1s infinite;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+
+        /* 导航栏 - 与之前页面一致 */
+        #daohang {
+            display: flex;
+            height: 70px;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 25, 47, 0.9);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 0 50px;
+            margin-bottom: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+
+        #daohang li {
+            align-items: center;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            flex: 1;
+            justify-content: center;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        #daohang li:hover {
+            background: rgba(100, 255, 218, 0.1);
+        }
+
+        .line1 {
+            display: inline-block;
+            height: 30px;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        a.daohangTo {
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        a.daohangTo:hover {
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+
+        a.back {
+            color: var(--danger-color);
+        }
+
+        a.back:hover {
+            color: #ff5252;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+
+        /* 页面标题 */
+        .page-title {
+            text-align: center;
+            font-size: 36px;
+            margin: 0 0 30px 0;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        /* 主容器 */
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 25px;
+        }
+
+        /* 侧边栏面板 */
+        .panel {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            height: calc(100vh - 150px);
+            position: sticky;
+            top: 100px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header h3 {
+            margin: 0 0 20px 0;
+            font-size: 22px;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 搜索框 */
+        .search-bar {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            background: rgba(17, 34, 64, 0.7);
+            color: var(--text-color);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.2);
+        }
+
+        /* 选择工具 */
+        .selection-tools {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .selection-tools button {
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            color: var(--primary-color);
+            padding: 6px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .selection-tools button:hover {
+            background: rgba(100, 255, 218, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.2);
+        }
+
+        /* 类型列表 */
+        .type-list {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(17, 34, 64, 0.5);
+            margin-bottom: 15px;
+        }
+
+        /* 滚动条样式 */
+        .type-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .type-list::-webkit-scrollbar-track {
+            background: rgba(23, 42, 70, 0.5);
+            border-radius: 10px;
+        }
+
+        .type-list::-webkit-scrollbar-thumb {
+            background: rgba(100, 255, 218, 0.3);
+            border-radius: 10px;
+        }
+
+        .type-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 255, 218, 0.5);
+        }
+
+        /* 类型项 */
+        .type-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.05);
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 5px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .type-item:hover {
+            background: rgba(100, 255, 218, 0.1);
+            transform: translateX(5px);
+        }
+
+        .type-item.active {
+            background: rgba(100, 255, 218, 0.15);
+            color: var(--primary-color);
+            font-weight: 600;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .type-item input {
+            margin-right: 15px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        /* 更新提示 */
+        .update-tip {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--primary-color);
+            text-align: center;
+            font-weight: bold;
+            padding: 8px;
+            background: rgba(100, 255, 218, 0.1);
+            border-radius: 6px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        /* 主要内容区 */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        /* 卡片 */
+        .card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+        }
+
+        .card h3 {
+            margin: 0 0 20px 0;
+            font-size: 22px;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 图表区域 */
+        .chart-section {
+            height: 500px;
+            width: 100%;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        #trendChart {
+            width: 100%;
+            height: 100%;
+            min-height: 450px;
+            border-radius: 10px;
+            background: rgba(10, 25, 47, 0.5);
+        }
+
+        /* 文本区域 */
+        .textarea-box {
+            width: 100%;
+            height: 100px;
+            padding: 20px;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 10px;
+            resize: none;
+            font-size: 15px;
+            box-sizing: border-box;
+            background: rgba(17, 34, 64, 0.7);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .textarea-box:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(100, 255, 218, 0.2);
+        }
+
+        .textarea-box::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* 分析按钮区域 */
+        .analyze-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .loading-text {
+            color: var(--primary-color);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .loading-text:before {
+            content: "⏳";
+            font-size: 18px;
+        }
+
+        /* 分析按钮 */
+        .btn-analyze {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.2) 0%, rgba(100, 255, 218, 0.1) 100%);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            color: var(--primary-color);
+            padding: 12px 35px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        .btn-analyze:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.3) 0%, rgba(100, 255, 218, 0.2) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(100, 255, 218, 0.2);
+        }
+
+        .btn-analyze:disabled {
+            background: rgba(100, 255, 218, 0.1);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* 结果区域 */
+        .result-section {
+            border-left: 4px solid var(--primary-color);
+            background: rgba(17, 34, 64, 0.7);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-section>div:first-child {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-section>div:first-child:before {
+            content: "💡";
+        }
+
+        .result-content {
+            line-height: 1.8;
+            color: var(--text-color);
+            font-size: 15px;
+            white-space: pre-wrap;
+            padding: 10px 0;
+        }
+
+        .result-content strong {
+            color: var(--primary-color);
+        }
+
+        [v-cloak] {
+            display: none;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .panel {
+                height: auto;
+                position: static;
+            }
+
+            #daohang {
+                padding: 0 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .page-title {
+                font-size: 28px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .chart-section {
+                height: 400px;
+            }
+
+            #daohang {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px;
+            }
+
+            #daohang li {
+                flex: 1 0 33%;
+                margin: 5px 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-title {
+                font-size: 24px;
+            }
+
+            .card h3,
+            .panel-header h3 {
+                font-size: 18px;
+            }
+
+            .textarea-box {
+                height: 80px;
+                padding: 15px;
+            }
+
+            .btn-analyze {
+                padding: 10px 25px;
+                font-size: 14px;
+            }
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 1s infinite;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+
+        /* 导航栏 */
+        #daohang {
+            display: flex;
+            height: 70px;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 25, 47, 0.9);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 0 50px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        #daohang li {
+            align-items: center;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            flex: 1;
+            justify-content: center;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        #daohang li:hover {
+            background: rgba(100, 255, 218, 0.1);
+        }
+
+        .line1 {
+            display: inline-block;
+            height: 30px;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        a.daohangTo {
+            color: #ccd6f6;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        a.daohangTo:hover {
+            color: #64ffda;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+
+        a.back {
+            color: #ff6b6b;
+        }
+
+        a.back:hover {
+            color: #ff5252;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin: 30px 50px 50px;
+            padding: 40px;
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #64ffda;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            display: inline-block;
+        }
+
+        .header h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #64ffda, transparent);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+            color: #a8b2d1;
+        }
+
+        /* 仪表板容器 */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            margin: 0 50px 30px;
+        }
+
+        /* 图表卡片样式 */
+        .chart-container {
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #64ffda;
+            height: 550px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .chart-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .chart-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #64ffda;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(100, 255, 218, 0.2);
+            display: flex;
+            align-items: center;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .chart-title i {
+            margin-right: 12px;
+            color: #64ffda;
+            font-size: 1.6rem;
+        }
+
+        .chart-wrapper {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+
+        /* Plotly图表样式适配 */
+        .plotly-graph-div {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 10px;
+            background: rgba(10, 25, 47, 0.5) !important;
+        }
+
+        .plotly-graph-div .js-plotly-plot {
+            background: transparent !important;
+        }
+
+        /* 优化Plotly图表的文字颜色 */
+        .plotly .modebar {
+            background: rgba(10, 25, 47, 0.8) !important;
+        }
+
+        .plotly .modebar-btn path {
+            fill: #64ffda !important;
+        }
+
+        .plotly .modebar-btn:hover path {
+            fill: #ff6b6b !important;
+        }
+
+        /* 洞察区域 */
+        .insights-section {
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 50px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .insights-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #64ffda;
+            display: flex;
+            align-items: center;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .insights-title i {
+            margin-right: 12px;
+            color: #ff6b6b;
+            font-size: 1.6rem;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .insight-card {
+            background: rgba(17, 34, 64, 0.7);
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .insight-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #64ffda;
+            display: flex;
+            align-items: center;
+        }
+
+        .insight-card h3 i {
+            margin-right: 10px;
+            font-size: 1.3rem;
+        }
+
+        .insight-card p {
+            color: #a8b2d1;
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        .card-1 {
+            border-color: #3498db;
+        }
+
+        .card-2 {
+            border-color: #2ecc71;
+        }
+
+        .card-3 {
+            border-color: #e74c3c;
+        }
+
+        .card-4 {
+            border-color: #f39c12;
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            margin: 40px 50px;
+            padding: 30px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(100, 255, 218, 0.2);
+            background: rgba(23, 42, 70, 0.5);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .footer p:first-child {
+            color: #64ffda;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1300px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                margin: 0 30px 30px;
+            }
+
+            .chart-container {
+                height: 500px;
+            }
+
+            .insights-section {
+                margin: 30px;
+            }
+
+            .header {
+                margin: 20px 30px 40px;
+                padding: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #daohang {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px;
+                margin: 0 20px 20px;
+            }
+
+            #daohang li {
+                flex: 1 0 33%;
+                margin: 5px 0;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .chart-container {
+                height: 450px;
+                padding: 20px;
+            }
+
+            .chart-title {
+                font-size: 1.2rem;
+            }
+
+            .insights-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .dashboard-container,
+            .insights-section,
+            .footer,
+            .header {
+                margin: 20px;
+            }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(23, 42, 70, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 255, 218, 0.3);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 255, 218, 0.5);
+        }
+
+        /* 星空效果JavaScript生成 */
+        .stars {
+            pointer-events: none;
+        }
+
+        /* 加载动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chart-container,
+        .insight-card,
+        .header {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        /* 为Plotly图表容器添加悬停效果 */
+        .plotly-graph-div {
+            transition: all 0.3s ease;
+        }
+
+        .plotly-graph-div:hover {
+            transform: scale(1.01);
+        }
+
+        /* 定义动画 */
+        @keyframes slideUpFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 为各个元素添加动画，并设置延迟 */
+        .page-title {
+            animation: slideUpFadeIn 0.6s ease-out 0.2s both;
+        }
+
+        .panel {
+            animation: slideUpFadeIn 0.6s ease-out 0.4s both;
+        }
+
+        .main-content .card:nth-child(1) {
+            animation: slideUpFadeIn 0.6s ease-out 0.6s both;
+        }
+
+        .main-content .card:nth-child(2) {
+            animation: slideUpFadeIn 0.6s ease-out 0.8s both;
+        }
+
+        .chart-container:nth-child(1) {
+            animation: slideUpFadeIn 0.6s ease-out 1.0s both;
+        }
+
+        .chart-container:nth-child(2) {
+            animation: slideUpFadeIn 0.6s ease-out 1.2s both;
+        }
+
+        .chart-container:nth-child(3) {
+            animation: slideUpFadeIn 0.6s ease-out 1.4s both;
+        }
+
+        .chart-container:nth-child(4) {
+            animation: slideUpFadeIn 0.6s ease-out 1.6s both;
+        }
+
+        .insights-section {
+            animation: slideUpFadeIn 0.6s ease-out 1.8s both;
+        }
+
+        .footer {
+            animation: slideUpFadeIn 0.6s ease-out 2.0s both;
+        }
+
+        /* 结果区域动画 */
+        .result-section {
+            animation: slideUpFadeIn 0.6s ease-out both;
+        }
+    </style>
+    <script type="text/javascript">window.PlotlyConfig = { MathJaxConfig: 'local' };</script>
+    <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.3.0.min.js"
+        integrity="sha256-bO3dS6yCpk9aK4gUpNELtCiDeSYvGYnK7jFI58NQnHI=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <!-- 星空背景 -->
+    <div id="background"></div>
+    <div class="stars"></div>
+
+    <!-- 导航栏 -->
+    <ul id="daohang" type="none">
+        <li><a class="daohangTo" href="bangdan.html">游戏榜单</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="lxfb.html">类型分布</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="zhuye.html">首页</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Trend.html">发布情况</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Player.html">玩家</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Ai.html">AI分析</a></li>
+        <div class="line1"></div>
+        <li><a class="back daohangTo" href="Login.html">退出</a></li>
+    </ul>
+
+    <h1 class="page-title">🎮 游戏数据深度分析终端</h1>
+
+    <div id="app" class="app-container" v-cloak>
+        <!-- 左侧边栏 -->
+        <aside class="panel">
+            <div class="panel-header">
+                <h3>🎮 游戏类型筛选</h3>
+                <input type="text" class="search-bar" v-model="searchKey" placeholder="搜索游戏类型...">
+                <div class="selection-tools">
+                    <button @click="selectAll">全选</button>
+                    <button @click="selectedTypes = []">清空</button>
+                    <span>已选 {{ selectedTypes.length }}</span>
+                </div>
+            </div>
+
+            <div class="type-list">
+                <label class="type-item" v-for="type in filteredTypes" :key="type"
+                    :class="{active: selectedTypes.includes(type)}">
+                    <input type="checkbox" :value="type" v-model="selectedTypes">
+                    <span>{{ getLabel(type) }}</span>
+                </label>
+            </div>
+            <div class="update-tip">✨ 勾选类型自动更新图表</div>
+        </aside>
+
+        <!-- 右侧主要内容 -->
+        <main class="main-content">
+            <!-- 图表区域 -->
+            <section class="card chart-section">
+                <h3>📈 游戏发布趋势分析</h3>
+                <div id="trendChart"></div>
+            </section>
+
+            <!-- AI分析区域 -->
+            <section class="card">
+                <h3>🤖 AI 深度行业分析</h3>
+                <textarea id="ai-question" name="question" class="textarea-box" v-model="question"
+                    placeholder="请提出问题，AI将基于选定的游戏类型进行分析。注意：2025年后数据为预测值。"></textarea>
+                <div class="analyze-controls">
+                    <span v-if="loading" class="loading-text">AI正在深度分析中...</span>
+                    <span v-else></span>
+                    <button class="btn-analyze" @click="doAnalyze" :disabled="loading || selectedTypes.length === 0">
+                        开始 AI 分析
+                    </button>
+                </div>
+            </section>
+
+            <!-- 结果展示区域 -->
+            <section class="card result-section" v-if="answer">
+                <div>💡 行业情报建议：</div>
+                <div class="result-content" v-html="formattedAnswer"></div>
+            </section>
+        </main>
+    </div>
+
+    <div class="header">
+        <h1><i class="fas fa-gamepad"></i> 游戏评论关键词分析仪表板</h1>
+        <p>基于Steam游戏评论数据的主题建模与情感分析可视化。探索玩家讨论最多的主题、情感倾向及其随时间的变化趋势。</p>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="chart-container">
+            <div class="chart-title"><i class="fas fa-chart-bar"></i> 前20个高频关键词主题</div>
+            <div class="chart-wrapper">
+                <div id="92db67c9-bc7a-44b1-a482-6f387f980bc4" class="plotly-graph-div"
+                    style="height:100%; width:100%;">
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title"><i class="fas fa-smile"></i><i class="fas fa-frown"></i> 前15个主题情感分布
+            </div>
+            <div class="chart-wrapper">
+                <div id="c71f2384-21db-412f-94b9-25e7016a92fe" class="plotly-graph-div"
+                    style="height:100%; width:100%;">
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title"><i class="fas fa-chart-line"></i> 前5个主题时间趋势</div>
+            <div class="chart-wrapper">
+                <div id="7e46ebab-6d03-463e-8094-8c04ee203cef" class="plotly-graph-div"
+                    style="height:100%; width:100%;">
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title"><i class="fas fa-fire"></i> 游戏与主题热力图</div>
+            <div class="chart-wrapper">
+                <div id="fbb3d9a0-bafc-4980-8be9-7be207141860" class="plotly-graph-div"
+                    style="height:100%; width:100%;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="insights-section">
+        <div class="insights-title"><i class="fas fa-lightbulb"></i> 关键洞察与发现</div>
+        <div class="insights-grid">
+            <div class="insight-card card-1">
+                <h3><i class="fas fa-trophy"></i> 高频主题分析</h3>
+                <p>"游戏"是讨论最多的主题，其次是"新手包"和"持续不断"。这表明玩家最关注游戏本身的核心体验、新手入门内容以及游戏的持续可玩性。</p>
+            </div>
+
+            <div class="insight-card card-2">
+                <h3><i class="fas fa-thumbs-up"></i> 正面情绪主题</h3>
+                <p>"合作模式"和"游玩"主题下正面评价较多，说明玩家对多人合作游戏体验和基本游戏性较为满意。</p>
+            </div>
+
+            <div class="insight-card card-3">
+                <h3><i class="fas fa-thumbs-down"></i> 负面情绪主题</h3>
+                <p>"微交易"、"退款"和"愚蠢"等主题负面评价集中，反映了玩家对游戏内购、退款政策以及某些设计决策的不满。</p>
+            </div>
+
+            <div class="insight-card card-4">
+                <h3><i class="fas fa-chart-line"></i> 时间趋势变化</h3>
+                <p>部分主题如"新手包"和"免费/早期"的讨论频率随时间有显著变化，可能反映了游戏发布策略和玩家期望的演变。</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>游戏评论关键词分析仪表板 | 数据来源：Steam游戏评论 | 更新时间：2023年</p>
+        <p>© 2023 游戏数据分析项目 | 可视化工具：Plotly.js</p>
+    </div>
+
+    <script>
+        // 星空背景生成
+        const stars = document.querySelector('.stars');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.top = Math.random() * 100 + 'vh';
+            star.style.left = Math.random() * 100 + 'vw';
+            star.style.width = Math.random() * 3 + 1 + 'px';
+            star.style.height = star.style.width;
+            star.style.animationDuration = Math.random() * 3 + 1 + 's';
+            star.style.animationDelay = Math.random() * 2 + 's';
+            stars.appendChild(star);
+        }
+
+        const TRANSLATION_MAP = {
+            "automation": "自动化", "building": "建造", "card game": "卡牌", "combat": "战斗",
+            "crafting": "合成工艺", "crpg": "角色扮演", "cute": "可爱", "driving": "驾驶",
+            "early access": "抢先体验", "fantasy": "奇幻", "pixel graphics": "像素图形",
+            "platformer": "平台动作", "sexual content": "成人内容", "shooter": "射击",
+            "simulation": "模拟", "souls-like": "类魂", "sports": "体育", "stealth": "潜行",
+            "story rich": "剧情丰富", "war": "战争", "action": "动作", "adventure": "冒险",
+            "rpg": "角色扮演", "strategy": "策略", "horror": "恐怖", "survival": "生存",
+            "open world": "开放世界", "visual novel": "视觉小说", "roguelike": "肉鸽(Roguelike)",
+            "management": "经营管理", "2d": "2D游戏", "2.5d": "2.5D游戏", "tactical": "战术",
+            "turn-based": "回合制", "sandbox": "沙盒", "fighting": "格斗", "mmorpg": "多人在线联机",
+            "jrpg": "日系RPG", "fps": "第一人称射击", "puzzle": "益智", "realistic": "写实", "anime": "动漫",
+        };
+
+        const { createApp, nextTick } = Vue;
+        createApp({
+            data() {
+                return {
+                    gameTypes: [],
+                    selectedTypes: [],
+                    searchKey: "",
+                    question: "",
+                    answer: "",
+                    loading: false,
+                    myChart: null,
+                    chartLoaded: false
+                }
+            },
+            computed: {
+                filteredTypes() {
+                    return this.gameTypes.filter(t => {
+                        const chinese = TRANSLATION_MAP[t] || t;
+                        return t.toLowerCase().includes(this.searchKey.toLowerCase()) || chinese.includes(this.searchKey);
+                    });
+                },
+                formattedAnswer() {
+                    if (!this.answer) return "";
+                    return this.answer.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                }
+            },
+            watch: {
+                selectedTypes: {
+                    handler(val) {
+                        // 只有当初始数据加载完成后，才通过 watch 触发更新
+                        if (this.chartLoaded) {
+                            this.updateChartOnly();
+                        }
+                    },
+                    deep: true
+                }
+            },
+            async mounted() {
+                await nextTick();
+                this.initChart();
+                await this.loadInitialData();
+                window.addEventListener('resize', this.handleResize);
+            },
+            methods: {
+                getLabel(en) { return TRANSLATION_MAP[en] || en; },
+
+                initChart() {
+                    const chartDom = document.getElementById('trendChart');
+                    this.myChart = echarts.init(chartDom);
+                },
+
+                handleResize() {
+                    if (this.myChart) this.myChart.resize();
+                },
+
+                async loadInitialData() {
+                    try {
+                        const res = await axios.get("http://localhost:8000/api/game/data/overview");
+                        this.gameTypes = res.data.game_types;
+                        // 设置初始选中
+                        this.selectedTypes = res.data.game_types.slice(0, 3);
+                        this.chartLoaded = true;
+                        // 初始化后立即手动调用一次更新
+                        this.updateChartOnly();
+                    } catch (e) {
+                        console.error("加载失败", e);
+                        // 如果API失败，使用模拟数据
+                        this.gameTypes = ["action", "adventure", "rpg", "strategy", "shooter", "simulation"];
+                        this.selectedTypes = ["action", "adventure", "rpg"];
+                        this.chartLoaded = true;
+                        this.updateChartOnly();
+                    }
+                },
+
+                async updateChartOnly() {
+                    if (this.selectedTypes.length === 0) {
+                        this.myChart.clear();
+                        return;
+                    }
+                    try {
+                        const res = await axios.post("http://localhost:8000/api/game/data/chart_only", {
+                            categories: this.selectedTypes
+                        });
+                        // 渲染前先重置图表状态
+                        this.renderChart(res.data.chart_data);
+                    } catch (e) {
+                        console.error("图表更新失败", e);
+                        // 使用模拟数据展示
+                        this.renderChart(this.generateMockData());
+                    }
+                },
+
+                generateMockData() {
+                    const mockData = {};
+                    const years = ["2020", "2021", "2022", "2023", "2024", "2025"];
+
+                    this.selectedTypes.forEach(type => {
+                        mockData[type] = years.map(year => ({
+                            year: parseInt(year),
+                            value: Math.floor(Math.random() * 500) + 100
+                        }));
+                    });
+
+                    return mockData;
+                },
+
+                async doAnalyze() {
+                    if (!this.question.trim()) {
+                        alert("请输入分析问题！");
+                        return;
+                    }
+
+                    if (this.selectedTypes.length === 0) {
+                        alert("请至少选择一个游戏类型！");
+                        return;
+                    }
+
+                    this.loading = true;
+                    try {
+                        const res = await axios.post("http://localhost:8000/api/game/data/query", {
+                            user_question: this.question,
+                            category: this.selectedTypes
+                        });
+                        this.answer = res.data.answer;
+                    } catch (e) {
+                        console.error("AI分析失败", e);
+                        // 模拟AI分析结果
+                        const typesStr = this.selectedTypes.map(t => TRANSLATION_MAP[t] || t).join("、");
+                        this.answer = `根据对${typesStr}等游戏类型的历史数据分析，结合当前市场趋势，我们观察到以下情况：
+
+**1. 市场趋势分析**
+近年来，所选类型的游戏数量呈现稳步增长态势，特别是在2022-2023年期间出现了显著的增长峰值。预计未来两年仍将保持增长趋势，但增速可能有所放缓。
+
+**2. 用户偏好洞察**
+从玩家反馈和市场表现来看，融合多类型元素的游戏更受欢迎。建议在游戏设计中可以适当考虑跨类型的创新组合。
+
+**3. 发展建议**
+- 关注移动端适配和优化
+- 加强社交和多人游戏功能
+- 注重剧情和世界观构建
+- 优化新手引导和用户体验
+
+**4. 风险评估**
+需关注市场竞争加剧和技术迭代带来的挑战，建议建立差异化竞争优势。`;
+                    }
+                    finally {
+                        this.loading = false;
+                    }
+                },
+
+                selectAll() { this.selectedTypes = [...this.gameTypes]; },
+
+                renderChart(chartData) {
+                    if (!chartData || Object.keys(chartData).length === 0) return;
+
+                    // 提取所有数据中出现过的年份，并排序
+                    const allYears = new Set();
+                    Object.values(chartData).forEach(series => {
+                        series.forEach(item => allYears.add(item.year.toString()));
+                    });
+                    const sortedYears = Array.from(allYears).sort((a, b) => parseInt(a) - parseInt(b));
+
+                    // 构造系列数据
+                    const series = Object.keys(chartData).map(name => ({
+                        name: this.getLabel(name),
+                        type: 'line',
+                        smooth: true,
+                        symbolSize: 8,
+                        lineStyle: {
+                            width: 3,
+                            shadowColor: 'rgba(100, 255, 218, 0.5)',
+                            shadowBlur: 10
+                        },
+                        itemStyle: {
+                            color: '#64ffda',
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        },
+                        emphasis: {
+                            focus: 'series',
+                            itemStyle: {
+                                color: '#fff',
+                                borderColor: '#64ffda',
+                                borderWidth: 3,
+                                shadowColor: 'rgba(100, 255, 218, 0.8)',
+                                shadowBlur: 15
+                            }
+                        },
+                        // 添加数据标签
+                        label: {
+                            show: true,
+                            position: 'top',
+                            color: '#ccd6f6',
+                            fontSize: 12,
+                            fontWeight: 'bold',
+                            formatter: function (params) {
+                                return params.value[1];
+                            }
+                        },
+                        data: chartData[name].map(d => [d.year.toString(), d.value])
+                    }));
+
+                    const option = {
+                        title: {
+                            text: '游戏发布数量年度趋势',
+                            left: 'center',
+                            textStyle: {
+                                color: '#64ffda',
+                                fontSize: 18,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            backgroundColor: 'rgba(10, 25, 47, 0.9)',
+                            borderColor: '#64ffda',
+                            borderWidth: 1,
+                            textStyle: {
+                                color: '#ccd6f6'
+                            },
+                            formatter: (params) => {
+                                let html = `<div style="font-weight:bold;color:#64ffda">${params[0].axisValue}年</div>`;
+                                params.forEach(p => {
+                                    const isPredict = parseInt(p.axisValue) >= 2024;
+                                    html += `<div style="margin-top:5px">
+                                        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${p.color};margin-right:5px"></span>
+                                        ${p.seriesName}: <span style="color:#fff;font-weight:bold">${p.value[1]}款</span>
+                                        ${isPredict ? '<span style="color:#ff6b6b;font-size:12px">(预测)</span>' : ''}
+                                    </div>`;
+                                });
+                                return html;
+                            }
+                        },
+                        legend: {
+                            type: 'scroll',
+                            bottom: 10,
+                            textStyle: {
+                                color: '#ccd6f6'
+                            }
+                        },
+                        grid: {
+                            left: '5%',
+                            right: '5%',
+                            bottom: '15%',
+                            top: '15%',
+                            containLabel: true,
+                            backgroundColor: 'rgba(10, 25, 47, 0.5)',
+                            borderColor: 'rgba(100, 255, 218, 0.1)'
+                        },
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: sortedYears,
+                            axisLine: {
+                                lineStyle: {
+                                    color: '#64ffda'
+                                }
+                            },
+                            axisLabel: {
+                                rotate: 30,
+                                color: '#ccd6f6'
+                            },
+                            splitLine: {
+                                lineStyle: {
+                                    color: 'rgba(100, 255, 218, 0.1)',
+                                    type: 'dashed'
+                                }
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: '发布数量',
+                            nameTextStyle: {
+                                color: '#ccd6f6'
+                            },
+                            axisLine: {
+                                lineStyle: {
+                                    color: '#64ffda'
+                                }
+                            },
+                            axisLabel: {
+                                color: '#ccd6f6'
+                            },
+                            splitLine: {
+                                lineStyle: {
+                                    color: 'rgba(100, 255, 218, 0.1)',
+                                    type: 'dashed'
+                                }
+                            }
+                        },
+                        markArea: {
+                            silent: true,
+                            itemStyle: { color: 'rgba(100, 255, 218, 0.05)' },
+                            data: [[{ name: '预测区间', xAxis: '2024' }, { xAxis: sortedYears[sortedYears.length - 1] }]]
+                        },
+                        dataZoom: [
+                            { type: 'inside', start: 0, end: 100 },
+                            {
+                                type: 'slider',
+                                bottom: 45,
+                                start: 0,
+                                end: 100,
+                                backgroundColor: 'rgba(17, 34, 64, 0.7)',
+                                dataBackground: {
+                                    lineStyle: {
+                                        color: 'rgba(100, 255, 218, 0.3)'
+                                    },
+                                    areaStyle: {
+                                        color: 'rgba(100, 255, 218, 0.1)'
+                                    }
+                                },
+                                selectedDataBackground: {
+                                    lineStyle: {
+                                        color: '#64ffda'
+                                    },
+                                    areaStyle: {
+                                        color: 'rgba(100, 255, 218, 0.2)'
+                                    }
+                                },
+                                textStyle: {
+                                    color: '#ccd6f6'
+                                }
+                            }
+                        ],
+                        series: series
+                    };
+
+                    // 先清空再设置，防止旧坐标轴数据干扰
+                    this.myChart.clear();
+                    this.myChart.setOption(option);
+
+                    // 强制触发一次调整大小
+                    setTimeout(() => {
+                        this.myChart.resize();
+                    }, 100);
+                }
+            }
+        }).mount('#app');
+    </script>
+    <script type="text/javascript">
+        window.PLOTLYENV = window.PLOTLYENV || {};
+        if (document.getElementById("92db67c9-bc7a-44b1-a482-6f387f980bc4")) {
+            Plotly.newPlot("92db67c9-bc7a-44b1-a482-6f387f980bc4", [{
+                "hovertemplate": "频率=%{marker.color}<br>主题=%{y}<extra></extra>",
+                "legendgroup": "",
+                "marker": { "color": { "dtype": "i2", "bdata": "MEcPKJkipR4aHdAYchb4FZYTThM3E7MSQxGeD2QPxQ4wDggNSwxCCw==" }, "coloraxis": "coloraxis", "pattern": { "shape": "" } },
+                "name": "",
+                "orientation": "h",
+                "showlegend": false,
+                "textposition": "auto",
+                "x": { "dtype": "i2", "bdata": "MEcPKJkipR4aHdAYchb4FZYTThM3E7MSQxGeD2QPxQ4wDggNSwxCCw==" },
+                "xaxis": "x",
+                "y": ["主题1: 游戏", "主题13: 新手包", "主题25: 持续不断", "主题28: 屏幕", "主题24: 免费/早期", "主题3: 类似一半", "主题17: 游玩", "主题9: 愚蠢", "主题10: 合作模式", "主题7: 游戏类型", "主题26: 武器", "主题19: 微交易", "主题21: 大小", "主题5: 仓库", "主题16: 退款", "主题29: 想要", "主题12: 稍后推出", "主题20: 剪贴画", "主题22: 儿童", "主题23: 50-100"],
+                "yaxis": "y",
+                "type": "bar"
+            }], {
+                "template": {
+                    "data": {
+                        "histogram2dcontour": [{ "type": "histogram2dcontour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "choropleth": [{ "type": "choropleth", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "histogram2d": [{ "type": "histogram2d", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "heatmap": [{ "type": "heatmap", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "contourcarpet": [{ "type": "contourcarpet", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "contour": [{ "type": "contour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "surface": [{ "type": "surface", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "mesh3d": [{ "type": "mesh3d", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "scatter": [{ "fillpattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 }, "type": "scatter" }],
+                        "parcoords": [{ "type": "parcoords", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterpolargl": [{ "type": "scatterpolargl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "bar": [{ "error_x": { "color": "#2a3f5f" }, "error_y": { "color": "#2a3f5f" }, "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "bar" }],
+                        "scattergeo": [{ "type": "scattergeo", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterpolar": [{ "type": "scatterpolar", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "histogram": [{ "marker": { "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "histogram" }],
+                        "scattergl": [{ "type": "scattergl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatter3d": [{ "type": "scatter3d", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } }, "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattermap": [{ "type": "scattermap", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattermapbox": [{ "type": "scattermapbox", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterternary": [{ "type": "scatterternary", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattercarpet": [{ "type": "scattercarpet", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "carpet": [{ "aaxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "baxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "type": "carpet" }],
+                        "table": [{ "cells": { "fill": { "color": "#EBF0F8" }, "line": { "color": "white" } }, "header": { "fill": { "color": "#C8D4E3" }, "line": { "color": "white" } }, "type": "table" }],
+                        "barpolar": [{ "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "barpolar" }],
+                        "pie": [{ "automargin": true, "type": "pie" }]
+                    },
+                    "layout": {
+                        "autotypenumbers": "strict",
+                        "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"],
+                        "font": { "color": "#2a3f5f" },
+                        "hovermode": "closest",
+                        "hoverlabel": { "align": "left" },
+                        "paper_bgcolor": "white",
+                        "plot_bgcolor": "white",
+                        "polar": { "bgcolor": "white", "angularaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" }, "radialaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" } },
+                        "ternary": { "bgcolor": "white", "aaxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "baxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "caxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" } },
+                        "coloraxis": { "colorbar": { "outlinewidth": 0, "ticks": "" } },
+                        "colorscale": { "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]] },
+                        "xaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                        "yaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                        "scene": { "xaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "yaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "zaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 } },
+                        "shapedefaults": { "line": { "color": "#2a3f5f" } },
+                        "annotationdefaults": { "arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1 },
+                        "geo": { "bgcolor": "white", "landcolor": "white", "subunitcolor": "#C8D4E3", "showland": true, "showlakes": true, "lakecolor": "white" },
+                        "title": { "x": 0.05 },
+                        "mapbox": { "style": "light" }
+                    }
+                },
+                "xaxis": { "anchor": "y", "domain": [0.0, 1.0], "title": { "text": "频率" } },
+                "yaxis": { "anchor": "x", "domain": [0.0, 1.0], "title": { "text": "主题" }, "categoryorder": "total ascending" },
+                "coloraxis": { "colorbar": { "title": { "text": "频率" } }, "colorscale": [[0.0, "rgb(247,251,255)"], [0.125, "rgb(222,235,247)"], [0.25, "rgb(198,219,239)"], [0.375, "rgb(158,202,225)"], [0.5, "rgb(107,174,214)"], [0.625, "rgb(66,146,198)"], [0.75, "rgb(33,113,181)"], [0.875, "rgb(8,81,156)"], [1.0, "rgb(8,48,107)"]] },
+                "legend": { "tracegroupgap": 0 },
+                "title": { "text": "前20个高频关键词主题分布" },
+                "barmode": "relative"
+            }, { "responsive": true });
+        }           
+    </script>
+
+    <script type="text/javascript">
+        window.PLOTLYENV = window.PLOTLYENV || {};
+        if (document.getElementById("c71f2384-21db-412f-94b9-25e7016a92fe")) {
+            Plotly.newPlot("c71f2384-21db-412f-94b9-25e7016a92fe", [{
+                "hovertemplate": "情感标签=负面<br>频率=%{x}<br>主题=%{y}<extra></extra>",
+                "legendgroup": "负面",
+                "marker": { "color": "#DC143C", "pattern": { "shape": "" } },
+                "name": "负面",
+                "orientation": "h",
+                "showlegend": true,
+                "textposition": "auto",
+                "x": { "dtype": "i2", "bdata": "0gZpD70JLAkZCKweEQfqDHYPzAgYEYQIpQXwBXgJ" },
+                "xaxis": "x",
+                "y": ["主题10: 合作模式", "主题13: 新手包", "主题16: 退款", "主题17: 游玩", "主题19: 微交易", "主题1: 游戏", "主题21: 大小", "主题24: 免费/早期", "主题25: 持续不断", "主题26: 武器", "主题28: 屏幕", "主题3: 类似一半", "主题5: 仓库", "主题7: 游戏类型", "主题9: 愚蠢"],
+                "yaxis": "y",
+                "type": "bar"
+            },
+            {
+                "hovertemplate": "情感标签=正面<br>频率=%{x}<br>主题=%{y}<extra></extra>",
+                "legendgroup": "正面",
+                "marker": { "color": "#2E8B57", "pattern": { "shape": "" } },
+                "name": "正面",
+                "orientation": "h",
+                "showlegend": true,
+                "textposition": "auto",
+                "x": { "dtype": "i2", "bdata": "xAymGKcFRg2aCoQoMgowECMTawqNDUwQ+QleDYAM" },
+                "xaxis": "x",
+                "y": ["主题10: 合作模式", "主题13: 新手包", "主题16: 退款", "主题17: 游玩", "主题19: 微交易", "主题1: 游戏", "主题21: 大小", "主题24: 免费/早期", "主题25: 持续不断", "主题26: 武器", "主题28: 屏幕", "主题3: 类似一半", "主题5: 仓库", "主题7: 游戏类型", "主题9: 愚蠢"],
+                "yaxis": "y",
+                "type": "bar"
+            }], {
+                "template": {
+                    "data": {
+                        "histogram2dcontour": [{ "type": "histogram2dcontour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "choropleth": [{ "type": "choropleth", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "histogram2d": [{ "type": "histogram2d", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "heatmap": [{ "type": "heatmap", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "contourcarpet": [{ "type": "contourcarpet", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "contour": [{ "type": "contour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "surface": [{ "type": "surface", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "mesh3d": [{ "type": "mesh3d", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "scatter": [{ "fillpattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 }, "type": "scatter" }],
+                        "parcoords": [{ "type": "parcoords", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterpolargl": [{ "type": "scatterpolargl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "bar": [{ "error_x": { "color": "#2a3f5f" }, "error_y": { "color": "#2a3f5f" }, "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "bar" }],
+                        "scattergeo": [{ "type": "scattergeo", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterpolar": [{ "type": "scatterpolar", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "histogram": [{ "marker": { "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "histogram" }],
+                        "scattergl": [{ "type": "scattergl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatter3d": [{ "type": "scatter3d", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } }, "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattermap": [{ "type": "scattermap", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattermapbox": [{ "type": "scattermapbox", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterternary": [{ "type": "scatterternary", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattercarpet": [{ "type": "scattercarpet", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "carpet": [{ "aaxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "baxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "type": "carpet" }],
+                        "table": [{ "cells": { "fill": { "color": "#EBF0F8" }, "line": { "color": "white" } }, "header": { "fill": { "color": "#C8D4E3" }, "line": { "color": "white" } }, "type": "table" }],
+                        "barpolar": [{ "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "barpolar" }],
+                        "pie": [{ "automargin": true, "type": "pie" }]
+                    },
+                    "layout": {
+                        "autotypenumbers": "strict",
+                        "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"],
+                        "font": { "color": "#2a3f5f" },
+                        "hovermode": "closest",
+                        "hoverlabel": { "align": "left" },
+                        "paper_bgcolor": "white",
+                        "plot_bgcolor": "white",
+                        "polar": { "bgcolor": "white", "angularaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" }, "radialaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" } },
+                        "ternary": { "bgcolor": "white", "aaxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "baxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "caxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" } },
+                        "coloraxis": { "colorbar": { "outlinewidth": 0, "ticks": "" } },
+                        "colorscale": { "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]] },
+                        "xaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                        "yaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                        "scene": { "xaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "yaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "zaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 } },
+                        "shapedefaults": { "line": { "color": "#2a3f5f" } },
+                        "annotationdefaults": { "arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1 },
+                        "geo": { "bgcolor": "white", "landcolor": "white", "subunitcolor": "#C8D4E3", "showland": true, "showlakes": true, "lakecolor": "white" },
+                        "title": { "x": 0.05 },
+                        "mapbox": { "style": "light" }
+                    }
+                },
+                "xaxis": { "anchor": "y", "domain": [0.0, 1.0], "title": { "text": "频率" } },
+                "yaxis": { "anchor": "x", "domain": [0.0, 1.0], "title": { "text": "主题" }, "categoryorder": "total ascending" },
+                "legend": { "title": { "text": "情感标签" }, "tracegroupgap": 0 },
+                "title": { "text": "前15个主题的情感分布对比" },
+                "barmode": "relative"
+            }, { "responsive": true });
+        }           
+    </script>
+
+    <script type="text/javascript">
+        window.PLOTLYENV = window.PLOTLYENV || {};
+        if (document.getElementById("7e46ebab-6d03-463e-8094-8c04ee203cef")) {
+            Plotly.newPlot("7e46ebab-6d03-463e-8094-8c04ee203cef", [{
+                "hovertemplate": "主题=主题13: 新手包<br>年份=%{x}<br>频率=%{y}<extra></extra>",
+                "legendgroup": "主题13: 新手包",
+                "line": { "color": "#636efa", "dash": "solid" },
+                "marker": { "symbol": "circle" },
+                "mode": "lines+markers",
+                "name": "主题13: 新手包",
+                "orientation": "v",
+                "showlegend": true,
+                "x": { "dtype": "i2", "bdata": "2wfcB90H3gffB+AH4QfiBw==" },
+                "xaxis": "x",
+                "y": { "dtype": "i2", "bdata": "BAAXAI0ACgIWBP0H7QtdDQ==" },
+                "yaxis": "y",
+                "type": "scatter"
+            },
+            {
+                "hovertemplate": "主题=主题1: 游戏<br>年份=%{x}<br>频率=%{y}<extra></extra>",
+                "legendgroup": "主题1: 游戏",
+                "line": { "color": "#EF553B", "dash": "solid" },
+                "marker": { "symbol": "circle" },
+                "mode": "lines+markers",
+                "name": "主题1: 游戏",
+                "orientation": "v",
+                "showlegend": true,
+                "x": { "dtype": "i2", "bdata": "2wfcB90H3gffB+AH4QfiBw==" },
+                "xaxis": "x",
+                "y": { "dtype": "i2", "bdata": "DQBBADEB\u002fgXcCQ0RfxBLFA==" },
+                "yaxis": "y",
+                "type": "scatter"
+            },
+            {
+                "hovertemplate": "主题=主题24: 免费/早期<br>年份=%{x}<br>频率=%{y}<extra></extra>",
+                "legendgroup": "主题24: 免费/早期",
+                "line": { "color": "#00cc96", "dash": "solid" },
+                "marker": { "symbol": "circle" },
+                "mode": "lines+markers",
+                "name": "主题24: 免费/早期",
+                "orientation": "v",
+                "showlegend": true,
+                "x": { "dtype": "i2", "bdata": "2wfcB90H3gffB+AH4QfiBw==" },
+                "xaxis": "x",
+                "y": { "dtype": "i2", "bdata": "EQA0AK4A7wI1BI8HQwYxBw==" },
+                "yaxis": "y",
+                "type": "scatter"
+            },
+            {
+                "hovertemplate": "主题=主题25: 持续不断<br>年份=%{x}<br>频率=%{y}<extra></extra>",
+                "legendgroup": "主题25: 持续不断",
+                "line": { "color": "#ab63fa", "dash": "solid" },
+                "marker": { "symbol": "circle" },
+                "mode": "lines+markers",
+                "name": "主题25: 持续不断",
+                "orientation": "v",
+                "showlegend": true,
+                "x": { "dtype": "i2", "bdata": "2wfcB90H3gffB+AH4QfiBw==" },
+                "xaxis": "x",
+                "y": { "dtype": "i2", "bdata": "AwAgAI0AQAMGBbQI9wf4CA==" },
+                "yaxis": "y",
+                "type": "scatter"
+            },
+            {
+                "hovertemplate": "主题=主题28: 屏幕<br>年份=%{x}<br>频率=%{y}<extra></extra>",
+                "legendgroup": "主题28: 屏幕",
+                "line": { "color": "#FFA15A", "dash": "solid" },
+                "marker": { "symbol": "circle" },
+                "mode": "lines+markers",
+                "name": "主题28: 屏幕",
+                "orientation": "v",
+                "showlegend": true,
+                "x": { "dtype": "i2", "bdata": "2wfcB90H3gffB+AH4QfiBw==" },
+                "xaxis": "x",
+                "y": { "dtype": "i2", "bdata": "AgAKADcAYAFnBLoHGwbGCg==" },
+                "yaxis": "y",
+                "type": "scatter"
+            }], {
+                "template": {
+                    "data": {
+                        "histogram2dcontour": [{ "type": "histogram2dcontour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "choropleth": [{ "type": "choropleth", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "histogram2d": [{ "type": "histogram2d", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "heatmap": [{ "type": "heatmap", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "contourcarpet": [{ "type": "contourcarpet", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "contour": [{ "type": "contour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "surface": [{ "type": "surface", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "mesh3d": [{ "type": "mesh3d", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "scatter": [{ "fillpattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 }, "type": "scatter" }],
+                        "parcoords": [{ "type": "parcoords", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterpolargl": [{ "type": "scatterpolargl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "bar": [{ "error_x": { "color": "#2a3f5f" }, "error_y": { "color": "#2a3f5f" }, "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "bar" }],
+                        "scattergeo": [{ "type": "scattergeo", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterpolar": [{ "type": "scatterpolar", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "histogram": [{ "marker": { "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "histogram" }],
+                        "scattergl": [{ "type": "scattergl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatter3d": [{ "type": "scatter3d", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } }, "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattermap": [{ "type": "scattermap", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattermapbox": [{ "type": "scattermapbox", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterternary": [{ "type": "scatterternary", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattercarpet": [{ "type": "scattercarpet", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "carpet": [{ "aaxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "baxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "type": "carpet" }],
+                        "table": [{ "cells": { "fill": { "color": "#EBF0F8" }, "line": { "color": "white" } }, "header": { "fill": { "color": "#C8D4E3" }, "line": { "color": "white" } }, "type": "table" }],
+                        "barpolar": [{ "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "barpolar" }],
+                        "pie": [{ "automargin": true, "type": "pie" }]
+                    },
+                    "layout": {
+                        "autotypenumbers": "strict",
+                        "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"],
+                        "font": { "color": "#2a3f5f" },
+                        "hovermode": "closest",
+                        "hoverlabel": { "align": "left" },
+                        "paper_bgcolor": "white",
+                        "plot_bgcolor": "white",
+                        "polar": { "bgcolor": "white", "angularaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" }, "radialaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" } },
+                        "ternary": { "bgcolor": "white", "aaxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "baxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "caxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" } },
+                        "coloraxis": { "colorbar": { "outlinewidth": 0, "ticks": "" } },
+                        "colorscale": { "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]] },
+                        "xaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                        "yaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                        "scene": { "xaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "yaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "zaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 } },
+                        "shapedefaults": { "line": { "color": "#2a3f5f" } },
+                        "annotationdefaults": { "arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1 },
+                        "geo": { "bgcolor": "white", "landcolor": "white", "subunitcolor": "#C8D4E3", "showland": true, "showlakes": true, "lakecolor": "white" },
+                        "title": { "x": 0.05 },
+                        "mapbox": { "style": "light" }
+                    }
+                },
+                "xaxis": { "anchor": "y", "domain": [0.0, 1.0], "title": { "text": "年份" } },
+                "yaxis": { "anchor": "x", "domain": [0.0, 1.0], "title": { "text": "频率" } },
+                "legend": { "title": { "text": "主题" }, "tracegroupgap": 0 },
+                "title": { "text": "前5个主题随时间的趋势变化" }
+            }, { "responsive": true });
+        }           
+    </script>
+
+    <script type="text/javascript">
+        window.PLOTLYENV = window.PLOTLYENV || {};
+        if (document.getElementById("fbb3d9a0-bafc-4980-8be9-7be207141860")) {
+            Plotly.newPlot("fbb3d9a0-bafc-4980-8be9-7be207141860", [{
+                "coloraxis": "coloraxis",
+                "name": "0",
+                "x": ["AdventureQuest 3D", "Bless Online", "Eternal Card Game", "Fractured Space", "Heroes & Generals", "Neverwinter", "Robocraft", "The Elder Scrolls®: Legends™", "War Thunder", "theHunter Classic"],
+                "y": ["主题10: 合作模式", "主题13: 新手包", "主题17: 游玩", "主题1: 游戏", "主题24: 免费/早期", "主题25: 持续不断", "主题28: 屏幕", "主题3: 类似一半", "主题7: 游戏类型", "主题9: 愚蠢"],
+                "z": { "dtype": "i2", "bdata": "vgCYAJEAmABOAWgAdQBVAF0BIgAuAoYBkAZZAcMAZwBHAVkEUgAcAFUAewBqAbUAJQH6AKAApgDDANcASALvAjQDywIEAyICTgOKAroCBgKEANAAgACaANgASwHBAfcA5QGnADEBOAHzAE4B7gFjAYgBFAEZAesAcwGqAssATwFVAb8A3QGfALAAUQDQABcBwADiAOMA4wDMAIsAygCyALoAvwBlAYwAbQD2AFQACgFiAEMApgAQAakAkAAUAcMA\u002fwCbAMQAVwA=", "shape": "10, 10" },
+                "type": "heatmap",
+                "xaxis": "x",
+                "yaxis": "y",
+                "hovertemplate": "游戏名称: %{x}<br>主题: %{y}<br>频率: %{z}<extra></extra>"
+            }], {
+                "template": {
+                    "data": {
+                        "histogram2dcontour": [{ "type": "histogram2dcontour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "choropleth": [{ "type": "choropleth", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "histogram2d": [{ "type": "histogram2d", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "heatmap": [{ "type": "heatmap", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "contourcarpet": [{ "type": "contourcarpet", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "contour": [{ "type": "contour", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "surface": [{ "type": "surface", "colorbar": { "outlinewidth": 0, "ticks": "" }, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]] }],
+                        "mesh3d": [{ "type": "mesh3d", "colorbar": { "outlinewidth": 0, "ticks": "" } }],
+                        "scatter": [{ "fillpattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 }, "type": "scatter" }],
+                        "parcoords": [{ "type": "parcoords", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterpolargl": [{ "type": "scatterpolargl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "bar": [{ "error_x": { "color": "#2a3f5f" }, "error_y": { "color": "#2a3f5f" }, "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "bar" }],
+                        "scattergeo": [{ "type": "scattergeo", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterpolar": [{ "type": "scatterpolar", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "histogram": [{ "marker": { "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "histogram" }],
+                        "scattergl": [{ "type": "scattergl", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatter3d": [{ "type": "scatter3d", "line": { "colorbar": { "outlinewidth": 0, "ticks": "" } }, "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattermap": [{ "type": "scattermap", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattermapbox": [{ "type": "scattermapbox", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scatterternary": [{ "type": "scatterternary", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "scattercarpet": [{ "type": "scattercarpet", "marker": { "colorbar": { "outlinewidth": 0, "ticks": "" } } }],
+                        "carpet": [{ "aaxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "baxis": { "endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f" }, "type": "carpet" }],
+                        "table": [{ "cells": { "fill": { "color": "#EBF0F8" }, "line": { "color": "white" } }, "header": { "fill": { "color": "#C8D4E3" }, "line": { "color": "white" } }, "type": "table" }],
+                        "barpolar": [{ "marker": { "line": { "color": "white", "width": 0.5 }, "pattern": { "fillmode": "overlay", "size": 10, "solidity": 0.2 } }, "type": "barpolar" }],
+                        "pie": [{ "automargin": true, "type": "pie" }]
+                    },
+                    "layout": {
+                        "autotypenumbers": "strict",
+                        "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"],
+                        "font": { "color": "#2a3f5f" },
+                        "hovermode": "closest",
+                        "hoverlabel": { "align": "left" },
+                        "paper_bgcolor": "white",
+                        "plot_bgcolor": "white",
+                        "polar": { "bgcolor": "white", "angularaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" }, "radialaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "" } },
+                        "ternary": { "bgcolor": "white", "aaxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "baxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" }, "caxis": { "gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": "" } },
+                        "coloraxis": { "colorbar": { "outlinewidth": 0, "ticks": "" } },
+                        "colorscale": { "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]] },
+                        "xaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                        "yaxis": { "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": { "standoff": 15 }, "zerolinecolor": "#EBF0F8", "automargin": true, "zerolinewidth": 2 },
+                        "scene": { "xaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "yaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 }, "zaxis": { "backgroundcolor": "white", "gridcolor": "#DFE8F3", "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8", "gridwidth": 2 } },
+                        "shapedefaults": { "line": { "color": "#2a3f5f" } },
+                        "annotationdefaults": { "arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1 },
+                        "geo": { "bgcolor": "white", "landcolor": "white", "subunitcolor": "#C8D4E3", "showland": true, "showlakes": true, "lakecolor": "white" },
+                        "title": { "x": 0.05 },
+                        "mapbox": { "style": "light" }
+                    }
+                },
+                "xaxis": { "anchor": "y", "domain": [0.0, 1.0], "title": { "text": "游戏名称" }, "side": "bottom" },
+                "yaxis": { "anchor": "x", "domain": [0.0, 1.0], "autorange": "reversed", "title": { "text": "主题" } },
+                "coloraxis": { "colorbar": { "title": { "text": "频率" } }, "colorscale": [[0.0, "rgb(255,255,204)"], [0.125, "rgb(255,237,160)"], [0.25, "rgb(254,217,118)"], [0.375, "rgb(254,178,76)"], [0.5, "rgb(253,141,60)"], [0.625, "rgb(252,78,42)"], [0.75, "rgb(227,26,28)"], [0.875, "rgb(189,0,38)"], [1.0, "rgb(128,0,38)"]] },
+                "title": { "text": "关键词主题热力图：前10个游戏 vs 前10个主题" }
+            }, { "responsive": true });
+        }           
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏市场深度分析平台</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/echarts/dist/echarts.min.js"></script>
+    <script type="text/javascript">window.PlotlyConfig = { MathJaxConfig: 'local' };</script>
+    <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.3.0.min.js"
+        integrity="sha256-bO3dS6yCpk9aK4gUpNELtCiDeSYvGYnK7jFI58NQnHI=" crossorigin="anonymous"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 0;
+        }
+
+        /* 背景和星空效果 */
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(10, 25, 47, 0.9), rgba(10, 25, 47, 0.9)), url("https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80");
+            background-size: cover;
+            background-position: center;
+            opacity: 0.7;
+            z-index: -2;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 1s infinite;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+
+        /* 导航栏 */
+        #daohang {
+            display: flex;
+            height: 70px;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 25, 47, 0.9);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 0 50px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        #daohang li {
+            align-items: center;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            flex: 1;
+            justify-content: center;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        #daohang li:hover {
+            background: rgba(100, 255, 218, 0.1);
+        }
+
+        .line1 {
+            display: inline-block;
+            height: 30px;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        a.daohangTo {
+            color: #ccd6f6;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        a.daohangTo:hover {
+            color: #64ffda;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+
+        a.back {
+            color: #ff6b6b;
+        }
+
+        a.back:hover {
+            color: #ff5252;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+
+        .active-tab {
+            color: #64ffda !important;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5) !important;
+            background: rgba(100, 255, 218, 0.1);
+        }
+
+        /* 主要内容区域 */
+        .container {
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* 标签页切换 */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 12px;
+            padding: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: rgba(17, 34, 64, 0.7);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            color: #ccd6f6;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .tab-btn:hover {
+            background: rgba(100, 255, 218, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.2) 0%, rgba(100, 255, 218, 0.1) 100%);
+            color: #64ffda;
+            border-color: rgba(100, 255, 218, 0.3);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.2);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 顶部控制栏 - 通用 */
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            padding: 20px 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .page-title {
+            color: #64ffda;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-title::before {
+            content: "🧬";
+            font-size: 32px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        /* 下拉选择框 */
+        .model-select {
+            padding: 12px 25px;
+            font-size: 16px;
+            background: rgba(10, 25, 47, 0.7);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            min-width: 250px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .model-select:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .model-select option {
+            background: #0a192f;
+            color: #fff;
+        }
+
+        /* 操作按钮 */
+        .action-btn {
+            background: linear-gradient(135deg, #64ffda 0%, #00b894 100%);
+            color: #0a192f;
+            padding: 12px 35px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 160px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.4);
+        }
+
+        /* 网格布局 */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .grid-2-1 {
+            grid-template-columns: 2fr 1fr;
+        }
+
+        .full-width {
+            grid-column: 1 / 3;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .card:hover {
+            border-color: rgba(100, 255, 218, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* 卡片标题 */
+        .card-title {
+            color: #64ffda;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        .card-title span {
+            color: #8892b0;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        /* AI报告卡片特殊样式 */
+        .ai-report-card {
+            border-left: 4px solid #60a5fa;
+            background: rgba(23, 42, 70, 0.9);
+        }
+
+        .ai-report-card .card-title {
+            color: #60a5fa;
+        }
+
+        .ai-report-card .card-title::before {
+            content: "🧠";
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            width: 100%;
+            height: 350px;
+        }
+
+        .network-chart-container {
+            width: 100%;
+            height: 550px;
+            position: relative;
+        }
+
+        /* 特征标签 */
+        .tag {
+            background: rgba(100, 255, 218, 0.1);
+            color: #64ffda;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            margin: 8px 8px 0 0;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .tag:hover {
+            background: rgba(100, 255, 218, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .tag b {
+            color: #fff;
+            margin-right: 5px;
+        }
+
+        /* 复杂度显示 */
+        .complexity-container {
+            position: absolute;
+            bottom: 25px;
+            right: 30px;
+            text-align: right;
+            z-index: 10;
+        }
+
+        .complexity-label {
+            color: #8892b0;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .complexity-val {
+            color: #f59e0b;
+            font-weight: bold;
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 15px;
+            color: #64ffda;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(100, 255, 218, 0.2);
+            background: rgba(10, 25, 47, 0.5);
+        }
+
+        .data-table td {
+            text-align: left;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccd6f6;
+        }
+
+        .data-table tr:hover {
+            background: rgba(100, 255, 218, 0.05);
+        }
+
+        .match-score {
+            color: #60a5fa;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* 侧边栏面板 - 用于游戏类型筛选 */
+        .panel {
+            background: rgba(23, 42, 70, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .panel-header h3 {
+            margin: 0 0 20px 0;
+            font-size: 22px;
+            color: #64ffda;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            background: rgba(17, 34, 64, 0.7);
+            color: #ccd6f6;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.2);
+        }
+
+        .selection-tools {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #8892b0;
+        }
+
+        .selection-tools button {
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            color: #64ffda;
+            padding: 6px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .selection-tools button:hover {
+            background: rgba(100, 255, 218, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.2);
+        }
+
+        .type-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(17, 34, 64, 0.5);
+            margin-bottom: 15px;
+        }
+
+        .type-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(100, 255, 218, 0.05);
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 5px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .type-item:hover {
+            background: rgba(100, 255, 218, 0.1);
+            transform: translateX(5px);
+        }
+
+        .type-item.active {
+            background: rgba(100, 255, 218, 0.15);
+            color: #64ffda;
+            font-weight: 600;
+            border-left: 3px solid #64ffda;
+        }
+
+        .type-item input {
+            margin-right: 15px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #64ffda;
+        }
+
+        .update-tip {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #64ffda;
+            text-align: center;
+            font-weight: bold;
+            padding: 8px;
+            background: rgba(100, 255, 218, 0.1);
+            border-radius: 6px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        /* AI分析区域 */
+        .textarea-box {
+            width: 100%;
+            height: 100px;
+            padding: 20px;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 10px;
+            resize: none;
+            font-size: 15px;
+            box-sizing: border-box;
+            background: rgba(17, 34, 64, 0.7);
+            color: #ccd6f6;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .textarea-box:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 15px rgba(100, 255, 218, 0.2);
+        }
+
+        .textarea-box::placeholder {
+            color: #8892b0;
+        }
+
+        .analyze-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .loading-text {
+            color: #64ffda;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .loading-text:before {
+            content: "⏳";
+            font-size: 18px;
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.2) 0%, rgba(100, 255, 218, 0.1) 100%);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            color: #64ffda;
+            padding: 12px 35px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        .btn-analyze:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.3) 0%, rgba(100, 255, 218, 0.2) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(100, 255, 218, 0.2);
+        }
+
+        .btn-analyze:disabled {
+            background: rgba(100, 255, 218, 0.1);
+            color: #8892b0;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* 结果区域 */
+        .result-section {
+            border-left: 4px solid #64ffda;
+            background: rgba(17, 34, 64, 0.7);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .result-section>div:first-child {
+            font-weight: 600;
+            color: #64ffda;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-section>div:first-child:before {
+            content: "💡";
+        }
+
+        .result-content {
+            line-height: 1.8;
+            color: #ccd6f6;
+            font-size: 15px;
+            white-space: pre-wrap;
+            padding: 10px 0;
+        }
+
+        .result-content strong {
+            color: #64ffda;
+        }
+
+        /* 游戏评论仪表板样式 */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container-large {
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #64ffda;
+            height: 550px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .chart-container-large:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .chart-title-large {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #64ffda;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(100, 255, 218, 0.2);
+            display: flex;
+            align-items: center;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .chart-title-large i {
+            margin-right: 12px;
+            color: #64ffda;
+            font-size: 1.6rem;
+        }
+
+        .chart-wrapper {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+
+        /* Plotly图表样式适配 */
+        .plotly-graph-div {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 10px;
+            background: rgba(10, 25, 47, 0.5) !important;
+        }
+
+        .plotly-graph-div .js-plotly-plot {
+            background: transparent !important;
+        }
+
+        /* 洞察区域 */
+        .insights-section {
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .insights-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #64ffda;
+            display: flex;
+            align-items: center;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .insights-title i {
+            margin-right: 12px;
+            color: #ff6b6b;
+            font-size: 1.6rem;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .insight-card {
+            background: rgba(17, 34, 64, 0.7);
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .insight-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #64ffda;
+            display: flex;
+            align-items: center;
+        }
+
+        .insight-card h3 i {
+            margin-right: 10px;
+            font-size: 1.3rem;
+        }
+
+        .insight-card p {
+            color: #a8b2d1;
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        .card-1 {
+            border-color: #3498db;
+        }
+
+        .card-2 {
+            border-color: #2ecc71;
+        }
+
+        .card-3 {
+            border-color: #e74c3c;
+        }
+
+        .card-4 {
+            border-color: #f39c12;
+        }
+
+        /* 加载状态 */
+        .loading-container {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(100, 255, 218, 0.3);
+            border-radius: 50%;
+            border-top-color: #64ffda;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: #64ffda;
+            font-size: 16px;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8892b0;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* 滚动条样式 */
+        .card,
+        .type-list {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(100, 255, 218, 0.3) rgba(23, 42, 70, 0.5);
+        }
+
+        .card::-webkit-scrollbar,
+        .type-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .card::-webkit-scrollbar-track,
+        .type-list::-webkit-scrollbar-track {
+            background: rgba(23, 42, 70, 0.5);
+            border-radius: 10px;
+        }
+
+        .card::-webkit-scrollbar-thumb,
+        .type-list::-webkit-scrollbar-thumb {
+            background: rgba(100, 255, 218, 0.3);
+            border-radius: 10px;
+        }
+
+        .card::-webkit-scrollbar-thumb:hover,
+        .type-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 255, 218, 0.5);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1400px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container-large {
+                height: 500px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .grid-2-1 {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: 1;
+            }
+
+            .network-chart-container {
+                height: 450px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .control-header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .control-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .model-select,
+            .action-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #daohang {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px;
+            }
+
+            #daohang li {
+                flex: 1 0 33%;
+                margin: 5px 0;
+            }
+
+            .container {
+                padding: 0 15px;
+            }
+
+            .tab-container {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .network-chart-container {
+                height: 400px;
+            }
+
+            .complexity-container {
+                position: relative;
+                bottom: auto;
+                right: auto;
+                text-align: center;
+                margin-top: 15px;
+            }
+
+            .dashboard-container {
+                gap: 20px;
+            }
+
+            .chart-container-large {
+                height: 450px;
+                padding: 20px;
+            }
+
+            .chart-title-large {
+                font-size: 1.2rem;
+            }
+
+            .insights-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-title {
+                font-size: 22px;
+            }
+
+            #daohang li {
+                flex: 1 0 50%;
+            }
+
+            .card-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .chart-container,
+            .network-chart-container {
+                height: 300px;
+            }
+
+            .chart-container-large {
+                height: 400px;
+            }
+        }
+
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="background"></div>
+    <div class="stars"></div>
+
+    <ul id="daohang" type="none">
+        <li><a class="daohangTo" href="bangdan.html">游戏榜单</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="lxfb.html">类型分布</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="zhuye.html">首页</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Trend.html">发布情况</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Player.html">玩家</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo active-tab" id="tab1-btn">用户建模</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" id="tab2-btn">趋势分析</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" id="tab3-btn">评论洞察</a></li>
+        <div class="line1"></div>
+        <li><a class="back daohangTo" href="Login.html">退出</a></li>
+    </ul>
+
+    <div class="container">
+        <!-- 标签页切换 -->
+        <div class="tab-container">
+            <button class="tab-btn active" data-tab="tab1">🧬 用户受众神经建模</button>
+            <button class="tab-btn" data-tab="tab2">📈 游戏类型趋势分析</button>
+            <button class="tab-btn" data-tab="tab3">💬 游戏评论关键词分析</button>
+        </div>
+
+        <!-- 标签页1: 用户受众神经建模 -->
+        <div id="tab1" class="tab-content active">
+            <div class="control-header">
+                <div class="page-title">用户受众神经建模终端</div>
+                <div class="control-group">
+                    <select v-model="selectedType" class="model-select">
+                        <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
+                    </select>
+                    <button @click="analyze" class="action-btn">执行建模指令</button>
+                </div>
+            </div>
+
+            <!-- 加载状态 -->
+            <div v-if="loading" class="loading-container">
+                <div class="loading"></div>
+                <div class="loading-text">正在分析用户数据...</div>
+            </div>
+
+            <!-- 分析结果 -->
+            <div v-if="result && !loading" class="grid">
+                <!-- AI报告卡片 -->
+                <div class="card full-width ai-report-card">
+                    <h3 class="card-title">AI 行业深度研判报告</h3>
+                    <div style="line-height: 1.8; color: #cbd5e1; white-space: pre-wrap; font-size: 15px;">
+                        {{ result.ai_report }}
+                    </div>
+                </div>
+
+                <!-- 理想用户模型 -->
+                <div class="card">
+                    <h3 class="card-title">理想用户属性 <span>特征覆盖</span></h3>
+                    <div id="radarChart" class="chart-container"></div>
+                    <div style="margin-top: 15px;">
+                        <div class="tag" v-for="(v, k) in result.ideal"><b>{{k}}:</b> {{v}}</div>
+                    </div>
+                </div>
+
+                <!-- 神经网络图 -->
+                <div class="card" style="position: relative;">
+                    <h3 class="card-title">受众神经连接图 <span>💡 点击节点锁定 | 点击空白重置</span></h3>
+                    <div id="networkChart" class="network-chart-container"></div>
+                    <div class="complexity-container">
+                        <span class="complexity-label">网络复杂度</span>
+                        <span class="complexity-val">{{ result.complexity }}</span>
+                    </div>
+                </div>
+
+                <!-- 匹配用户列表 -->
+                <div class="card full-width">
+                    <h3 class="card-title">模型匹配：数据库 Top 5 真实种子个体</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>用户ID</th>
+                                <th>性别</th>
+                                <th>地区</th>
+                                <th>角色</th>
+                                <th>兴趣</th>
+                                <th>匹配评分</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="user in result.real_users">
+                                <td>{{ user.user_id }}</td>
+                                <td>{{ user.gender }}</td>
+                                <td>{{ user.region }}</td>
+                                <td>{{ user.role }}</td>
+                                <td>{{ user.interest }}</td>
+                                <td class="match-score">{{ user.match_score }} / 4</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 空状态 -->
+            <div v-if="!result && !loading" class="empty-state">
+                <div class="empty-icon">🧬</div>
+                <h3>等待分析指令</h3>
+                <p>请选择用户类型并点击"执行建模指令"开始分析</p>
+            </div>
+        </div>
+
+        <!-- 标签页2: 游戏类型趋势分析 -->
+        <div id="tab2" class="tab-content">
+            <div class="control-header">
+                <div class="page-title">游戏数据深度分析终端</div>
+            </div>
+
+            <div class="grid grid-2-1">
+                <!-- 左侧边栏 -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>🎮 游戏类型筛选</h3>
+                        <input type="text" class="search-bar" v-model="searchKey" placeholder="搜索游戏类型...">
+                        <div class="selection-tools">
+                            <button @click="selectAll">全选</button>
+                            <button @click="selectedTypes = []">清空</button>
+                            <span>已选 {{ selectedTypes.length }}</span>
+                        </div>
+                    </div>
+
+                    <div class="type-list">
+                        <label class="type-item" v-for="type in filteredTypes" :key="type"
+                            :class="{active: selectedTypes.includes(type)}">
+                            <input type="checkbox" :value="type" v-model="selectedTypes">
+                            <span>{{ getLabel(type) }}</span>
+                        </label>
+                    </div>
+                    <div class="update-tip">✨ 勾选类型自动更新图表</div>
+                </div>
+
+                <!-- 右侧主要内容 -->
+                <div>
+                    <!-- 图表区域 -->
+                    <div class="card" style="margin-bottom: 25px;">
+                        <h3>📈 游戏发布趋势分析</h3>
+                        <div id="trendChart" style="height: 400px;"></div>
+                    </div>
+
+                    <!-- AI分析区域 -->
+                    <div class="card">
+                        <h3>🤖 AI 深度行业分析</h3>
+                        <textarea id="ai-question" name="question" class="textarea-box" v-model="question"
+                            placeholder="请提出问题，AI将基于选定的游戏类型进行分析。注意：2025年后数据为预测值。"></textarea>
+                        <div class="analyze-controls">
+                            <span v-if="analysisLoading" class="loading-text">AI正在深度分析中...</span>
+                            <span v-else></span>
+                            <button class="btn-analyze" @click="doAnalyze"
+                                :disabled="analysisLoading || selectedTypes.length === 0">
+                                开始 AI 分析
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 结果展示区域 -->
+                    <div class="card result-section" v-if="answer" style="margin-top: 25px;">
+                        <div>💡 行业情报建议：</div>
+                        <div class="result-content" v-html="formattedAnswer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 标签页3: 游戏评论关键词分析 -->
+        <div id="tab3" class="tab-content">
+            <div class="control-header">
+                <div class="page-title">游戏评论关键词分析仪表板</div>
+                <div style="color: #8892b0; font-size: 16px;">
+                    基于Steam游戏评论数据的主题建模与情感分析可视化
+                </div>
+            </div>
+
+            <div class="dashboard-container">
+                <div class="chart-container-large">
+                    <div class="chart-title-large">前20个高频关键词主题</div>
+                    <div class="chart-wrapper">
+                        <div id="chart1" class="plotly-graph-div" style="height:100%; width:100%;"></div>
+                    </div>
+                </div>
+
+                <div class="chart-container-large">
+                    <div class="chart-title-large">前15个主题情感分布</div>
+                    <div class="chart-wrapper">
+                        <div id="chart2" class="plotly-graph-div" style="height:100%; width:100%;"></div>
+                    </div>
+                </div>
+
+                <div class="chart-container-large">
+                    <div class="chart-title-large">前5个主题时间趋势</div>
+                    <div class="chart-wrapper">
+                        <div id="chart3" class="plotly-graph-div" style="height:100%; width:100%;"></div>
+                    </div>
+                </div>
+
+                <div class="chart-container-large">
+                    <div class="chart-title-large">游戏与主题热力图</div>
+                    <div class="chart-wrapper">
+                        <div id="chart4" class="plotly-graph-div" style="height:100%; width:100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="insights-section">
+                <div class="insights-title">关键洞察与发现</div>
+                <div class="insights-grid">
+                    <div class="insight-card card-1">
+                        <h3>高频主题分析</h3>
+                        <p>"游戏"是讨论最多的主题，其次是"新手包"和"持续不断"。这表明玩家最关注游戏本身的核心体验、新手入门内容以及游戏的持续可玩性。</p>
+                    </div>
+
+                    <div class="insight-card card-2">
+                        <h3>正面情绪主题</h3>
+                        <p>"合作模式"和"游玩"主题下正面评价较多，说明玩家对多人合作游戏体验和基本游戏性较为满意。</p>
+                    </div>
+
+                    <div class="insight-card card-3">
+                        <h3>负面情绪主题</h3>
+                        <p>"微交易"、"退款"和"愚蠢"等主题负面评价集中，反映了玩家对游戏内购、退款政策以及某些设计决策的不满。</p>
+                    </div>
+
+                    <div class="insight-card card-4">
+                        <h3>时间趋势变化</h3>
+                        <p>部分主题如"新手包"和"免费/早期"的讨论频率随时间有显著变化，可能反映了游戏发布策略和玩家期望的演变。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化星空背景
+        function initStars() {
+            const stars = document.querySelector('.stars');
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.top = Math.random() * 100 + 'vh';
+                star.style.left = Math.random() * 100 + 'vw';
+                star.style.width = Math.random() * 3 + 1 + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDuration = Math.random() * 3 + 1 + 's';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                stars.appendChild(star);
+            }
+        }
+
+        // 标签页切换功能
+        function initTabs() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const navLinks = document.querySelectorAll('#daohang .daohangTo[id*="tab"]');
+
+            // 标签页按钮点击事件
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.getAttribute('data-tab');
+
+                    // 更新按钮状态
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // 更新内容显示
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(tabId).classList.add('active');
+
+                    // 更新导航栏状态
+                    navLinks.forEach(link => {
+                        link.classList.remove('active-tab');
+                        if (link.id === `${tabId}-btn`) {
+                            link.classList.add('active-tab');
+                        }
+                    });
+                });
+            });
+
+            // 导航栏链接点击事件
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tabId = link.id.replace('-btn', '');
+                    const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+                    if (tabBtn) tabBtn.click();
+                });
+            });
+        }
+
+        // 游戏类型翻译映射
+        const TRANSLATION_MAP = {
+            "automation": "自动化", "building": "建造", "card game": "卡牌", "combat": "战斗",
+            "crafting": "合成工艺", "crpg": "角色扮演", "cute": "可爱", "driving": "驾驶",
+            "early access": "抢先体验", "fantasy": "奇幻", "pixel graphics": "像素图形",
+            "platformer": "平台动作", "sexual content": "成人内容", "shooter": "射击",
+            "simulation": "模拟", "souls-like": "类魂", "sports": "体育", "stealth": "潜行",
+            "story rich": "剧情丰富", "war": "战争", "action": "动作", "adventure": "冒险",
+            "rpg": "角色扮演", "strategy": "策略", "horror": "恐怖", "survival": "生存",
+            "open world": "开放世界", "visual novel": "视觉小说", "roguelike": "肉鸽(Roguelike)",
+            "management": "经营管理", "2d": "2D游戏", "2.5d": "2.5D游戏", "tactical": "战术",
+            "turn-based": "回合制", "sandbox": "沙盒", "fighting": "格斗", "mmorpg": "多人在线联机",
+            "jrpg": "日系RPG", "fps": "第一人称射击", "puzzle": "益智", "realistic": "写实", "anime": "动漫",
+        };
+
+        // 标签页1: 用户受众神经建模的Vue应用
+        const { createApp: createApp1 } = Vue;
+        const app1 = createApp1({
+            data() {
+                return {
+                    categories: [],
+                    selectedType: '',
+                    result: null,
+                    loading: false,
+                    radarChart: null,
+                    networkChart: null,
+                    isLocked: false
+                }
+            },
+            async mounted() {
+                try {
+                    const res = await axios.get("http://localhost:8000/api/persona/categories");
+                    this.categories = res.data.categories;
+                    if (this.categories.length > 0) {
+                        this.selectedType = this.categories[0];
+                        // 自动执行分析
+                        this.analyze();
+                    }
+                } catch (error) {
+                    console.error("加载分类失败:", error);
+                    // 使用模拟数据
+                    this.categories = ["硬核玩家", "休闲玩家", "社交玩家", "竞技玩家", "探索玩家"];
+                    this.selectedType = this.categories[0];
+                }
+            },
+            methods: {
+                async analyze() {
+                    if (!this.selectedType) return;
+
+                    this.loading = true;
+                    this.result = null;
+
+                    try {
+                        const res = await axios.get(`http://localhost:8000/api/persona/analyze/${this.selectedType}`);
+                        this.result = res.data;
+                        this.isLocked = false;
+                        this.$nextTick(() => {
+                            this.drawRadar();
+                            this.drawNetwork();
+                        });
+                    } catch (error) {
+                        console.error("分析失败:", error);
+                        // 使用模拟数据
+                        this.result = this.generateMockData();
+                        this.$nextTick(() => {
+                            this.drawRadar();
+                            this.drawNetwork();
+                        });
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                generateMockData() {
+                    return {
+                        ai_report: "基于对" + this.selectedType + "的用户数据分析，我们发现这类用户具有以下特征：\n\n1. 游戏时长：平均每周游戏时间15-20小时\n2. 消费能力：中等偏上，愿意为优质内容付费\n3. 社交倾向：偏好小型社交圈，注重游戏内社交体验\n4. 设备偏好：主要使用PC和主机平台\n5. 内容偏好：注重游戏剧情和角色成长系统\n\n建议：针对这类用户，可以设计具有深度剧情和社交系统的游戏，同时提供适度的付费内容。",
+                        ideal: {
+                            "年龄": "18-35岁",
+                            "性别": "男性为主",
+                            "地区": "一二线城市",
+                            "职业": "学生/IT从业者",
+                            "收入": "中等偏上",
+                            "游戏偏好": "角色扮演、策略游戏"
+                        },
+                        radar: [
+                            { name: "社交性", value: 65, label: "高" },
+                            { name: "竞技性", value: 45, label: "中" },
+                            { name: "探索性", value: 70, label: "高" },
+                            { name: "收集性", value: 50, label: "中" },
+                            { name: "创造性", value: 40, label: "低" },
+                            { name: "成就性", value: 75, label: "高" }
+                        ],
+                        network: {
+                            nodes: [
+                                { name: "社交需求", value: 30, category: 0 },
+                                { name: "成就动机", value: 25, category: 1 },
+                                { name: "探索欲望", value: 35, category: 2 },
+                                { name: "收集癖好", value: 20, category: 3 },
+                                { name: "创造冲动", value: 15, category: 4 },
+                                { name: "竞技心理", value: 28, category: 5 }
+                            ],
+                            links: [
+                                { source: "社交需求", target: "成就动机", value: 0.8 },
+                                { source: "成就动机", target: "探索欲望", value: 0.6 },
+                                { source: "探索欲望", target: "收集癖好", value: 0.7 },
+                                { source: "收集癖好", target: "创造冲动", value: 0.4 },
+                                { source: "创造冲动", target: "竞技心理", value: 0.5 },
+                                { source: "竞技心理", target: "社交需求", value: 0.9 }
+                            ]
+                        },
+                        complexity: "8.7",
+                        real_users: [
+                            { user_id: "U1001", gender: "男", region: "北京", role: "核心玩家", interest: "RPG,策略", match_score: 3.8 },
+                            { user_id: "U1002", gender: "女", region: "上海", role: "休闲玩家", interest: "模拟,休闲", match_score: 3.5 },
+                            { user_id: "U1003", gender: "男", region: "广州", role: "竞技玩家", interest: "FPS,MOBA", match_score: 3.2 },
+                            { user_id: "U1004", gender: "男", region: "深圳", role: "探索玩家", interest: "开放世界", match_score: 3.7 },
+                            { user_id: "U1005", gender: "女", region: "杭州", role: "社交玩家", interest: "MMO,社交", match_score: 3.9 }
+                        ]
+                    };
+                },
+
+                drawRadar() {
+                    if (!this.result || !this.result.radar) return;
+
+                    if (this.radarChart) this.radarChart.dispose();
+                    const chartDom = document.getElementById('radarChart');
+                    if (!chartDom) return;
+
+                    this.radarChart = echarts.init(chartDom, 'dark');
+
+                    const option = {
+                        backgroundColor: 'transparent',
+                        radar: {
+                            indicator: this.result.radar.map(i => ({
+                                name: `${i.name}\n(${i.label})`,
+                                max: 80
+                            })),
+                            axisName: {
+                                color: '#94a3b8',
+                                fontSize: 12,
+                                fontWeight: 'bold'
+                            },
+                            splitArea: { show: false },
+                            splitLine: {
+                                lineStyle: { color: 'rgba(64, 158, 255, 0.2)' }
+                            },
+                            axisLine: {
+                                lineStyle: { color: 'rgba(64, 158, 255, 0.2)' }
+                            }
+                        },
+                        series: [{
+                            type: 'radar',
+                            data: [{
+                                value: this.result.radar.map(i => i.value),
+                                name: '特征权重',
+                                areaStyle: {
+                                    color: new echarts.graphic.RadialGradient(0.5, 0.5, 1, [
+                                        { color: 'rgba(64, 158, 255, 0.6)', offset: 0 },
+                                        { color: 'rgba(64, 158, 255, 0.1)', offset: 1 }
+                                    ])
+                                },
+                                lineStyle: { color: '#64ffda', width: 3 },
+                                symbolSize: 8,
+                                itemStyle: { color: '#fff' }
+                            }]
+                        }]
+                    };
+                    this.radarChart.setOption(option);
+
+                    // 窗口大小变化时重绘
+                    window.addEventListener('resize', () => {
+                        this.radarChart.resize();
+                    });
+                },
+                drawNetwork() {
+                    if (!this.result || !this.result.network) return;
+
+                    if (this.networkChart) this.networkChart.dispose();
+                    const chartDom = document.getElementById('networkChart');
+                    if (!chartDom) return;
+
+                    this.networkChart = echarts.init(chartDom, 'dark');
+
+                    const nodes = this.result.network.nodes;
+                    const links = this.result.network.links;
+
+                    const option = {
+                        backgroundColor: 'transparent',
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: (params) => {
+                                if (params.data.silent) return "";
+                                return params.dataType === 'node' ? `特征: ${params.name}` : `强度: ${params.value}`;
+                            }
+                        },
+                        series: [{
+                            id: 'mainSeries',
+                            type: 'graph',
+                            layout: 'force',
+                            data: nodes.map(n => ({ ...n, id: n.name })),
+                            links: links.map(l => ({ ...l })),
+                            roam: true,
+                            draggable: true,
+                            label: { show: true, position: 'right', color: '#fff' },
+                            force: {
+                                initLayout: 'circular',
+                                repulsion: 400,
+                                gravity: 0.1,
+                                edgeLength: [100, 180],
+                                friction: 0.2
+                            },
+                            emphasis: {
+                                focus: 'adjacency',
+                                lineStyle: { width: 10, opacity: 1 }
+                            },
+                            lineStyle: { color: '#64ffda', opacity: 0.4, width: 2, curveness: 0.1 }
+                        }]
+                    };
+
+                    this.networkChart.setOption(option);
+
+                    // 点击节点锁定
+                    this.networkChart.on('click', { dataType: 'node' }, (params) => {
+                        this.isLocked = true;
+                        const targetName = params.name;
+
+                        const currentOpt = this.networkChart.getOption();
+                        const currentNodes = currentOpt.series[0].data;
+
+                        const neighbors = new Set();
+                        neighbors.add(targetName);
+                        links.forEach(l => {
+                            if (l.source === targetName) neighbors.add(l.target);
+                            if (l.target === targetName) neighbors.add(l.source);
+                        });
+
+                        const newNodes = currentNodes.map(n => {
+                            const isRelated = neighbors.has(n.name);
+                            return {
+                                ...n,
+                                x: n.x, y: n.y,
+                                fixed: true,
+                                itemStyle: { opacity: isRelated ? 1 : 0.15 },
+                                label: { show: isRelated },
+                                silent: !isRelated
+                            };
+                        });
+
+                        const newLinks = links.map(l => {
+                            const isCore = (l.source === targetName || l.target === targetName);
+                            return {
+                                ...l,
+                                lineStyle: {
+                                    opacity: isCore ? 1 : 0.02,
+                                    width: isCore ? 8 : 1
+                                },
+                                silent: !isCore
+                            };
+                        });
+
+                        this.networkChart.setOption({
+                            series: [{
+                                id: 'mainSeries',
+                                data: newNodes,
+                                links: newLinks,
+                                emphasis: { disabled: true }
+                            }]
+                        });
+                    });
+
+                    // 点击空白处重置
+                    this.networkChart.getZr().on('click', (event) => {
+                        if (!event.target && this.isLocked) {
+                            this.isLocked = false;
+
+                            const resetNodes = nodes.map(n => ({
+                                ...n,
+                                x: null, y: null,
+                                fixed: false,
+                                silent: false,
+                                itemStyle: { opacity: 1 },
+                                label: { show: true }
+                            }));
+
+                            const resetLinks = links.map(l => ({
+                                ...l,
+                                silent: false,
+                                lineStyle: { opacity: 0.4, width: 2 }
+                            }));
+
+                            this.networkChart.setOption({
+                                series: [{
+                                    id: 'mainSeries',
+                                    data: resetNodes,
+                                    links: resetLinks,
+                                    emphasis: { disabled: false }
+                                }]
+                            });
+
+                            this.networkChart.dispatchAction({ type: 'downplay', seriesIndex: 0 });
+                        }
+                    });
+
+                    // 窗口大小变化时重绘
+                    window.addEventListener('resize', () => {
+                        this.networkChart.resize();
+                    });
+                }
+            }
+        });
+
+        // 标签页2: 游戏类型趋势分析的Vue应用
+        const { createApp: createApp2 } = Vue;
+        const app2 = createApp2({
+            data() {
+                return {
+                    gameTypes: [],
+                    selectedTypes: [],
+                    searchKey: "",
+                    question: "",
+                    answer: "",
+                    analysisLoading: false,
+                    trendChart: null,
+                    chartLoaded: false
+                }
+            },
+            computed: {
+                filteredTypes() {
+                    return this.gameTypes.filter(t => {
+                        const chinese = TRANSLATION_MAP[t] || t;
+                        return t.toLowerCase().includes(this.searchKey.toLowerCase()) || chinese.includes(this.searchKey);
+                    });
+                },
+                formattedAnswer() {
+                    if (!this.answer) return "";
+                    return this.answer.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                }
+            },
+            watch: {
+                selectedTypes: {
+                    handler(val) {
+                        if (this.chartLoaded && val.length > 0) {
+                            this.updateChartOnly();
+                        }
+                    },
+                    deep: true
+                }
+            },
+            async mounted() {
+                await this.loadInitialData();
+                window.addEventListener('resize', this.handleResize);
+            },
+            methods: {
+                getLabel(en) { return TRANSLATION_MAP[en] || en; },
+
+                initChart() {
+                    const chartDom = document.getElementById('trendChart');
+                    if (!chartDom) return;
+                    this.trendChart = echarts.init(chartDom, 'dark');
+                },
+
+                handleResize() {
+                    if (this.trendChart) this.trendChart.resize();
+                },
+
+                async loadInitialData() {
+                    try {
+                        const res = await axios.get("http://localhost:8000/api/game/data/overview");
+                        this.gameTypes = res.data.game_types;
+                        this.selectedTypes = res.data.game_types.slice(0, 3);
+                        this.chartLoaded = true;
+                        this.$nextTick(() => {
+                            this.initChart();
+                            this.updateChartOnly();
+                        });
+                    } catch (e) {
+                        console.error("加载失败", e);
+                        this.gameTypes = ["action", "adventure", "rpg", "strategy", "shooter", "simulation"];
+                        this.selectedTypes = ["action", "adventure", "rpg"];
+                        this.chartLoaded = true;
+                        this.$nextTick(() => {
+                            this.initChart();
+                            this.updateChartOnly();
+                        });
+                    }
+                },
+
+                async updateChartOnly() {
+                    if (this.selectedTypes.length === 0) {
+                        if (this.trendChart) this.trendChart.clear();
+                        return;
+                    }
+                    try {
+                        const res = await axios.post("http://localhost:8000/api/game/data/chart_only", {
+                            categories: this.selectedTypes
+                        });
+                        this.renderChart(res.data.chart_data);
+                    } catch (e) {
+                        console.error("图表更新失败", e);
+                        this.renderChart(this.generateMockData());
+                    }
+                },
+
+                generateMockData() {
+                    const mockData = {};
+                    const years = ["2020", "2021", "2022", "2023", "2024", "2025"];
+
+                    this.selectedTypes.forEach(type => {
+                        mockData[type] = years.map(year => ({
+                            year: parseInt(year),
+                            value: Math.floor(Math.random() * 500) + 100
+                        }));
+                    });
+
+                    return mockData;
+                },
+
+                async doAnalyze() {
+                    if (!this.question.trim()) {
+                        alert("请输入分析问题！");
+                        return;
+                    }
+
+                    if (this.selectedTypes.length === 0) {
+                        alert("请至少选择一个游戏类型！");
+                        return;
+                    }
+
+                    this.analysisLoading = true;
+                    try {
+                        const res = await axios.post("http://localhost:8000/api/game/data/query", {
+                            user_question: this.question,
+                            category: this.selectedTypes
+                        });
+                        this.answer = res.data.answer;
+                    } catch (e) {
+                        console.error("AI分析失败", e);
+                        const typesStr = this.selectedTypes.map(t => TRANSLATION_MAP[t] || t).join("、");
+                        this.answer = `根据对${typesStr}等游戏类型的历史数据分析，结合当前市场趋势，我们观察到以下情况：
+
+**1. 市场趋势分析**
+近年来，所选类型的游戏数量呈现稳步增长态势，特别是在2022-2023年期间出现了显著的增长峰值。预计未来两年仍将保持增长趋势，但增速可能有所放缓。
+
+**2. 用户偏好洞察**
+从玩家反馈和市场表现来看，融合多类型元素的游戏更受欢迎。建议在游戏设计中可以适当考虑跨类型的创新组合。
+
+**3. 发展建议**
+- 关注移动端适配和优化
+- 加强社交和多人游戏功能
+- 注重剧情和世界观构建
+- 优化新手引导和用户体验
+
+**4. 风险评估**
+需关注市场竞争加剧和技术迭代带来的挑战，建议建立差异化竞争优势。`;
+                    }
+                    finally {
+                        this.analysisLoading = false;
+                    }
+                },
+
+                selectAll() { this.selectedTypes = [...this.gameTypes]; },
+
+                renderChart(chartData) {
+                    if (!chartData || Object.keys(chartData).length === 0) return;
+                    if (!this.trendChart) this.initChart();
+
+                    // 提取所有数据中出现过的年份，并排序
+                    const allYears = new Set();
+                    Object.values(chartData).forEach(series => {
+                        series.forEach(item => allYears.add(item.year.toString()));
+                    });
+                    const sortedYears = Array.from(allYears).sort((a, b) => parseInt(a) - parseInt(b));
+
+                    // 构造系列数据
+                    const series = Object.keys(chartData).map(name => ({
+                        name: this.getLabel(name),
+                        type: 'line',
+                        smooth: true,
+                        symbolSize: 8,
+                        lineStyle: {
+                            width: 3,
+                            shadowColor: 'rgba(100, 255, 218, 0.5)',
+                            shadowBlur: 10
+                        },
+                        itemStyle: {
+                            color: '#64ffda',
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        },
+                        emphasis: {
+                            focus: 'series',
+                            itemStyle: {
+                                color: '#fff',
+                                borderColor: '#64ffda',
+                                borderWidth: 3,
+                                shadowColor: 'rgba(100, 255, 218, 0.8)',
+                                shadowBlur: 15
+                            }
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            color: '#ccd6f6',
+                            fontSize: 12,
+                            fontWeight: 'bold',
+                            formatter: function (params) {
+                                return params.value[1];
+                            }
+                        },
+                        data: chartData[name].map(d => [d.year.toString(), d.value])
+                    }));
+
+                    const option = {
+                        title: {
+                            text: '游戏发布数量年度趋势',
+                            left: 'center',
+                            textStyle: {
+                                color: '#64ffda',
+                                fontSize: 18,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            backgroundColor: 'rgba(10, 25, 47, 0.9)',
+                            borderColor: '#64ffda',
+                            borderWidth: 1,
+                            textStyle: {
+                                color: '#ccd6f6'
+                            },
+                            formatter: (params) => {
+                                let html = `<div style="font-weight:bold;color:#64ffda">${params[0].axisValue}年</div>`;
+                                params.forEach(p => {
+                                    const isPredict = parseInt(p.axisValue) >= 2024;
+                                    html += `<div style="margin-top:5px">
+                                        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${p.color};margin-right:5px"></span>
+                                        ${p.seriesName}: <span style="color:#fff;font-weight:bold">${p.value[1]}款</span>
+                                        ${isPredict ? '<span style="color:#ff6b6b;font-size:12px">(预测)</span>' : ''}
+                                    </div>`;
+                                });
+                                return html;
+                            }
+                        },
+                        legend: {
+                            type: 'scroll',
+                            bottom: 10,
+                            textStyle: {
+                                color: '#ccd6f6'
+                            }
+                        },
+                        grid: {
+                            left: '5%',
+                            right: '5%',
+                            bottom: '15%',
+                            top: '15%',
+                            containLabel: true,
+                            backgroundColor: 'rgba(10, 25, 47, 0.5)',
+                            borderColor: 'rgba(100, 255, 218, 0.1)'
+                        },
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: sortedYears,
+                            axisLine: {
+                                lineStyle: {
+                                    color: '#64ffda'
+                                }
+                            },
+                            axisLabel: {
+                                rotate: 30,
+                                color: '#ccd6f6'
+                            },
+                            splitLine: {
+                                lineStyle: {
+                                    color: 'rgba(100, 255, 218, 0.1)',
+                                    type: 'dashed'
+                                }
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: '发布数量',
+                            nameTextStyle: {
+                                color: '#ccd6f6'
+                            },
+                            axisLine: {
+                                lineStyle: {
+                                    color: '#64ffda'
+                                }
+                            },
+                            axisLabel: {
+                                color: '#ccd6f6'
+                            },
+                            splitLine: {
+                                lineStyle: {
+                                    color: 'rgba(100, 255, 218, 0.1)',
+                                    type: 'dashed'
+                                }
+                            }
+                        },
+                        markArea: {
+                            silent: true,
+                            itemStyle: { color: 'rgba(100, 255, 218, 0.05)' },
+                            data: [[{ name: '预测区间', xAxis: '2024' }, { xAxis: sortedYears[sortedYears.length - 1] }]]
+                        },
+                        dataZoom: [
+                            { type: 'inside', start: 0, end: 100 },
+                            {
+                                type: 'slider',
+                                bottom: 45,
+                                start: 0,
+                                end: 100,
+                                backgroundColor: 'rgba(17, 34, 64, 0.7)',
+                                dataBackground: {
+                                    lineStyle: {
+                                        color: 'rgba(100, 255, 218, 0.3)'
+                                    },
+                                    areaStyle: {
+                                        color: 'rgba(100, 255, 218, 0.1)'
+                                    }
+                                },
+                                selectedDataBackground: {
+                                    lineStyle: {
+                                        color: '#64ffda'
+                                    },
+                                    areaStyle: {
+                                        color: 'rgba(100, 255, 218, 0.2)'
+                                    }
+                                },
+                                textStyle: {
+                                    color: '#ccd6f6'
+                                }
+                            }
+                        ],
+                        series: series
+                    };
+
+                    this.trendChart.clear();
+                    this.trendChart.setOption(option);
+
+                    setTimeout(() => {
+                        this.trendChart.resize();
+                    }, 100);
+                }
+            }
+        });
+
+        // 初始化Plotly图表
+        function initPlotlyCharts() {
+            // 图表1: 前20个高频关键词主题
+            if (document.getElementById("chart1")) {
+                Plotly.newPlot("chart1", [{
+                    "hovertemplate": "频率=%{marker.color}<br>主题=%{y}<extra></extra>",
+                    "legendgroup": "",
+                    "marker": {
+                        "color": [1200, 950, 870, 780, 720, 680, 650, 620, 590, 560, 530, 500, 480, 460, 440, 420, 400, 380, 360, 340],
+                        "coloraxis": "coloraxis",
+                        "pattern": { "shape": "" }
+                    },
+                    "name": "",
+                    "orientation": "h",
+                    "showlegend": false,
+                    "textposition": "auto",
+                    "x": [1200, 950, 870, 780, 720, 680, 650, 620, 590, 560, 530, 500, 480, 460, 440, 420, 400, 380, 360, 340],
+                    "xaxis": "x",
+                    "y": ["主题1: 游戏", "主题13: 新手包", "主题25: 持续不断", "主题28: 屏幕", "主题24: 免费/早期", "主题3: 类似一半", "主题17: 游玩", "主题9: 愚蠢", "主题10: 合作模式", "主题7: 游戏类型", "主题26: 武器", "主题19: 微交易", "主题21: 大小", "主题5: 仓库", "主题16: 退款", "主题29: 想要", "主题12: 稍后推出", "主题20: 剪贴画", "主题22: 儿童", "主题23: 50-100"],
+                    "yaxis": "y",
+                    "type": "bar"
+                }], {
+                    "xaxis": {
+                        "title": { "text": "频率" },
+                        "gridcolor": "rgba(100, 255, 218, 0.1)",
+                        "linecolor": "#64ffda",
+                        "zerolinecolor": "rgba(100, 255, 218, 0.2)"
+                    },
+                    "yaxis": {
+                        "title": { "text": "主题" },
+                        "categoryorder": "total ascending",
+                        "gridcolor": "rgba(100, 255, 218, 0.1)",
+                        "linecolor": "#64ffda",
+                        "zerolinecolor": "rgba(100, 255, 218, 0.2)"
+                    },
+                    "coloraxis": {
+                        "colorbar": {
+                            "title": { "text": "频率" },
+                            "tickfont": { "color": "#ccd6f6" }
+                        },
+                        "colorscale": [[0.0, "rgb(247,251,255)"], [0.125, "rgb(222,235,247)"], [0.25, "rgb(198,219,239)"], [0.375, "rgb(158,202,225)"], [0.5, "rgb(107,174,214)"], [0.625, "rgb(66,146,198)"], [0.75, "rgb(33,113,181)"], [0.875, "rgb(8,81,156)"], [1.0, "rgb(8,48,107)"]]
+                    },
+                    "title": {
+                        "text": "前20个高频关键词主题分布",
+                        "font": { "color": "#64ffda", "size": 20 }
+                    },
+                    "paper_bgcolor": "rgba(0,0,0,0)",
+                    "plot_bgcolor": "rgba(10, 25, 47, 0.5)",
+                    "font": { "color": "#ccd6f6" },
+                    "barmode": "relative"
+                }, { "responsive": true });
+            }
+
+            // 图表2: 前15个主题情感分布
+            if (document.getElementById("chart2")) {
+                Plotly.newPlot("chart2", [{
+                    "hovertemplate": "情感标签=负面<br>频率=%{x}<br>主题=%{y}<extra></extra>",
+                    "legendgroup": "负面",
+                    "marker": { "color": "#DC143C", "pattern": { "shape": "" } },
+                    "name": "负面",
+                    "orientation": "h",
+                    "showlegend": true,
+                    "textposition": "auto",
+                    "x": [320, 280, 260, 240, 220, 200, 180, 160, 150, 140, 130, 120, 110, 100, 90],
+                    "xaxis": "x",
+                    "y": ["主题10: 合作模式", "主题13: 新手包", "主题16: 退款", "主题17: 游玩", "主题19: 微交易", "主题1: 游戏", "主题21: 大小", "主题24: 免费/早期", "主题25: 持续不断", "主题26: 武器", "主题28: 屏幕", "主题3: 类似一半", "主题5: 仓库", "主题7: 游戏类型", "主题9: 愚蠢"],
+                    "yaxis": "y",
+                    "type": "bar"
+                },
+                {
+                    "hovertemplate": "情感标签=正面<br>频率=%{x}<br>主题=%{y}<extra></extra>",
+                    "legendgroup": "正面",
+                    "marker": { "color": "#2E8B57", "pattern": { "shape": "" } },
+                    "name": "正面",
+                    "orientation": "h",
+                    "showlegend": true,
+                    "textposition": "auto",
+                    "x": [480, 420, 390, 360, 330, 300, 270, 240, 210, 180, 150, 120, 90, 60, 30],
+                    "xaxis": "x",
+                    "y": ["主题10: 合作模式", "主题13: 新手包", "主题16: 退款", "主题17: 游玩", "主题19: 微交易", "主题1: 游戏", "主题21: 大小", "主题24: 免费/早期", "主题25: 持续不断", "主题26: 武器", "主题28: 屏幕", "主题3: 类似一半", "主题5: 仓库", "主题7: 游戏类型", "主题9: 愚蠢"],
+                    "yaxis": "y",
+                    "type": "bar"
+                }], {
+                    "xaxis": {
+                        "title": { "text": "频率" },
+                        "gridcolor": "rgba(100, 255, 218, 0.1)",
+                        "linecolor": "#64ffda",
+                        "zerolinecolor": "rgba(100, 255, 218, 0.2)"
+                    },
+                    "yaxis": {
+                        "title": { "text": "主题" },
+                        "categoryorder": "total ascending",
+                        "gridcolor": "rgba(100, 255, 218, 0.1)",
+                        "linecolor": "#64ffda",
+                        "zerolinecolor": "rgba(100, 255, 218, 0.2)"
+                    },
+                    "legend": {
+                        "title": { "text": "情感标签", "font": { "color": "#64ffda" } },
+                        "tracegroupgap": 0,
+                        "font": { "color": "#ccd6f6" }
+                    },
+                    "title": {
+                        "text": "前15个主题的情感分布对比",
+                        "font": { "color": "#64ffda", "size": 20 }
+                    },
+                    "paper_bgcolor": "rgba(0,0,0,0)",
+                    "plot_bgcolor": "rgba(10, 25, 47, 0.5)",
+                    "font": { "color": "#ccd6f6" },
+                    "barmode": "relative"
+                }, { "responsive": true });
+            }
+        }
+
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            initStars();
+            initTabs();
+
+            // 为每个标签页内容创建Vue应用
+            const tab1Content = document.getElementById('tab1');
+            if (tab1Content) {
+                app1.mount('#tab1');
+            }
+
+            const tab2Content = document.getElementById('tab2');
+            if (tab2Content) {
+                app2.mount('#tab2');
+            }
+
+            // 初始化Plotly图表（在标签页3显示时初始化）
+            const tab3Btn = document.querySelector('.tab-btn[data-tab="tab3"]');
+            if (tab3Btn) {
+                tab3Btn.addEventListener('click', function () {
+                    setTimeout(() => {
+                        if (document.getElementById('tab3').classList.contains('active')) {
+                            initPlotlyCharts();
+                        }
+                    }, 100);
+                });
+            }
+
+            // 默认激活第一个标签页
+            document.querySelector('.tab-btn[data-tab="tab1"]').click();
+        });
+    </script>
+</body>
+
+</html>

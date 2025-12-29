@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页-游戏市场分析</title>
+    <link rel="stylesheet" href="css/zhuye.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- 引入ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+
+<body>
+    <div id="background"></div>
+    <div class="stars"></div>
+
+    <ul id="daohang" type="none">
+        <li><a class="daohangTo" href="bangdan.html">游戏榜单</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="lxfb.html">类型分布</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="zhuye.html">首页</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Trend.html">发布情况</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Player.html">玩家</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Ai.html">AI分析</a></li>
+        <div class="line1"></div>
+        <li><a class="back daohangTo" href="Login.html">退出</a></li>
+    </ul>
+
+    <div id="zhongbu1">
+        <div id="bangdan">
+            <h3>热门排行榜</h3>
+            <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.5);" />
+            <ol>
+                <li><input type="button" onclick="show1()" value="上古卷轴5:天际" class="btn"></li>
+                <li><input type="button" onclick="show2()" value="Disco Elysium: The Final Cut" class="btn"></li>
+                <li><input type="button" onclick="show3()" value="Half-Life 2" class="btn"></li>
+                <li><input type="button" onclick="show4()" value="Grand Theft Auto V" class="btn"></li>
+                <li><input type="button" onclick="show5()" value="Metaphor: ReFantazio" class="btn"></li>
+                <li><input type="button" onclick="show6()" value="Silent Hill 2" class="btn"></li>
+                <li><input type="button" onclick="show7()" value="传说之下" class="btn"></li>
+                <li><input type="button" onclick="show8()" value="巫师3" class="btn"></li>
+                <li><input type="button" onclick="show9()" value="饥荒" class="btn"></li>
+                <li><input type="button" onclick="show10()" value="模拟人生4" class="btn"></li>
+            </ol>
+        </div>
+
+        <div id="xx1">
+            <img src="https://zongshe.oss-cn-beijing.aliyuncs.com/62a4689c-6d08-4225-af35-08894f153801.jpg" alt="游戏截图"
+                id="img">
+        </div>
+
+        <div id="xx2">
+            <p id="text">《上古卷轴5：天际》（The Elder Scrolls
+                V：Skyrim）是奇幻类开放世界型动作角色扮演游戏，是《上古卷轴》系列的第五作，由Bethesda游戏工作室开发。《上古卷轴5：天际》发行于2011年11月11日，游戏平台为PC、Xbox
+                360、PS3。《上古卷轴5：天际》将会和《上古卷轴4》拥有同等大小的地图。在这广阔的地图之上，Bethesda工作室给玩家提供了超过120个不重复的地下迷宫，以及9个规模宏大的城市供玩家探索，而玩家将在这个奇异自由的世界踏上史诗性的征程，使用自己心仪的武器装备自己擅长的技能，去和巨兽，飞龙战斗。
+            </p>
+        </div>
+    </div>
+
+    <div id="zhongbu3">
+        <div id="xx5">
+            <h3>游戏类型</h3>
+            <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.5);" />
+            <ul id="gametype">
+                <li><input type="button" onclick="type1()" value="休闲益智" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type2()" value="体育运动" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type3()" value="养成游戏" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type4()" value="冒险游戏" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type5()" value="动作游戏" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type6()" value="即时战略" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type7()" value="射击游戏" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type8()" value="恋爱养成" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type9()" value="格斗游戏" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type10()" value="桌面棋牌" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type11()" value="模拟经营" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type12()" value="策略游戏" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type13()" value="网络游戏" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type14()" value="角色扮演" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type15()" value="赛车游戏" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type16()" value="音乐游戏" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type17()" value="飞行射击" class="btn"></li>
+                <hr style="height:1px;border:none;border-top:1px dashed rgba(100, 255, 218, 0.3);" />
+                <li><input type="button" onclick="type18()" value="其他游戏" class="btn"></li>
+            </ul>
+        </div>
+
+        <div id="xx6">
+            <div id="switch">
+                <div id="zhexiantu"><input type="button" onclick="switch1()" value="折线图" class="btn1"></div>
+                <div id="zhuzhuangtu"><input type="button" onclick="switch2()" value="柱状图" class="btn1"></div>
+            </div>
+            <div id="table">
+                <!-- 改为div容器用于ECharts -->
+                <div id="chart-container" style="width: 100%; height: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/zhuye.js"></script>
+</body>
+
+</html>

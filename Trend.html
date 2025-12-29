@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布趋势-游戏市场分析</title>
+    <link rel="stylesheet" href="css/Trend.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="background"></div>
+    <div class="stars"></div>
+
+    <ul id="daohang" type="none">
+        <li><a class="daohangTo" href="bangdan.html">游戏榜单</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="lxfb.html">类型分布</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="zhuye.html">首页</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Trend.html">发布情况</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Player.html">玩家</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Ai.html">AI分析</a></li>
+        <div class="line1"></div>
+        <li><a class="back daohangTo" href="Login.html">退出</a></li>
+    </ul>
+
+    <div id="main-container">
+        <div id="header-section">
+            <h2>游戏发布趋势分析</h2>
+            <p>探索不同游戏类型在不同年份的发布情况</p>
+            <div id="current-type">当前游戏类型: <span>休闲益智</span></div>
+        </div>
+
+        <div id="charts-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>饼图对比</h3>
+                    <div class="year-selector">
+                        <span>年份: </span>
+                        <select id="year1">
+                            <!-- 年份选项将通过JS动态添加 -->
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-content">
+                    <canvas id="canvas1"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>饼图对比</h3>
+                    <div class="year-selector">
+                        <span>年份: </span>
+                        <select id="year2">
+                            <!-- 年份选项将通过JS动态添加 -->
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-content">
+                    <canvas id="canvas2"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="controls-section">
+            <div class="control-panel">
+                <h3>游戏类型选择</h3>
+                <div class="type-buttons">
+                    <button class="type-btn active" data-type="休闲益智">休闲益智</button>
+                    <button class="type-btn" data-type="体育运动">体育运动</button>
+                    <button class="type-btn" data-type="养成游戏">养成游戏</button>
+                    <button class="type-btn" data-type="冒险游戏">冒险游戏</button>
+                    <button class="type-btn" data-type="动作游戏">动作游戏</button>
+                    <button class="type-btn" data-type="即时战略">即时战略</button>
+                    <button class="type-btn" data-type="射击游戏">射击游戏</button>
+                    <button class="type-btn" data-type="恋爱养成">恋爱养成</button>
+                    <button class="type-btn" data-type="格斗游戏">格斗游戏</button>
+                    <button class="type-btn" data-type="桌面棋牌">桌面棋牌</button>
+                    <button class="type-btn" data-type="模拟经营">模拟经营</button>
+                    <button class="type-btn" data-type="策略游戏">策略游戏</button>
+                    <button class="type-btn" data-type="网络游戏">网络游戏</button>
+                    <button class="type-btn" data-type="角色扮演">角色扮演</button>
+                    <button class="type-btn" data-type="赛车游戏">赛车游戏</button>
+                    <button class="type-btn" data-type="音乐游戏">音乐游戏</button>
+                    <button class="type-btn" data-type="飞行射击">飞行射击</button>
+                    <button class="type-btn" data-type="其他游戏">其他游戏</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/Trend.js"></script>
+</body>
+
+</html>

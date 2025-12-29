@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玩家分析-游戏市场分析</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/Player.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2/dist/echarts-gl.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+</head>
+
+<body>
+    <div id="background"></div>
+    <div class="stars"></div>
+
+    <ul id="daohang" type="none">
+        <li><a class="daohangTo" href="bangdan.html">游戏榜单</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="lxfb.html">类型分布</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="zhuye.html">首页</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Trend.html">发布情况</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Player.html">玩家</a></li>
+        <div class="line1"></div>
+        <li><a class="daohangTo" href="Ai.html">AI分析</a></li>
+        <div class="line1"></div>
+        <li><a class="back daohangTo" href="Login.html">退出</a></li>
+    </ul>
+
+    <div id="main-container">
+        <div id="header-section">
+            <h2>玩家数据分析</h2>
+            <p>探索玩家性别、地域分布和评论情感分析</p>
+        </div>
+
+        <!-- 性别分布部分 -->
+        <div class="section">
+            <div class="section-header">
+                <h3><i class="fas fa-venus-mars"></i> 性别分布</h3>
+            </div>
+            <div class="section-content">
+                <div class="chart-container">
+                    <div id="gender-bar-chart" class="chart"></div>
+                </div>
+                <div class="chart-container">
+                    <div id="gender-pie-chart" class="chart"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 地域分布部分 -->
+        <div class="section">
+            <div class="section-header">
+                <h3><i class="fas fa-map-marked-alt"></i> 地域分布</h3>
+                <div class="chart-switcher">
+                    <button id="switch-line" class="chart-btn active">折线图</button>
+                    <button id="switch-bar" class="chart-btn">柱状图</button>
+                </div>
+            </div>
+            <div class="section-content">
+                <div id="region-chart" class="chart"></div>
+            </div>
+        </div>
+
+        <!-- 3D地图部分 -->
+        <div class="section">
+            <div class="section-header">
+                <h3><i class="fas fa-globe-asia"></i> 玩家地域热力图</h3>
+            </div>
+            <div class="section-content">
+                <div id="map-container" class="chart"></div>
+            </div>
+        </div>
+
+        <!-- 评论分析部分 -->
+        <div class="section">
+            <div class="section-header">
+                <h3><i class="fas fa-comments"></i> 用户评论分析</h3>
+                <div class="section-actions">
+                    <button id="emotion-toggle" class="action-btn">
+                        <i class="fas fa-chart-pie"></i> 情感分析
+                    </button>
+                    <a class="action-btn" href="comment.html">
+                        <i class="fas fa-search"></i> 关键字查询
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-content">
+                <div id="comments-section">
+                    <div class="comment-type-selector">
+                        <button data-type="all" class="type-btn active">全部评论</button>
+                        <button data-type="桌面游戏" class="type-btn">桌面游戏</button>
+                        <button data-type="二次元游戏" class="type-btn">二次元游戏</button>
+                        <button data-type="黑神话" class="type-btn">黑神话</button>
+                        <button data-type="单机小游戏" class="type-btn">单机小游戏</button>
+                        <button data-type="合家欢游戏" class="type-btn">合家欢游戏</button>
+                        <button data-type="3A游戏" class="type-btn">3A游戏</button>
+                        <button data-type="galgame" class="type-btn">galgame</button>
+                    </div>
+
+                    <div id="comments-container">
+                        <div class="comments-display">
+                            <div class="comment-column">
+                                <h4>评论内容</h4>
+                                <div id="comment1" class="comment-list"></div>
+                            </div>
+                            <div class="comment-column">
+                                <h4>评论内容</h4>
+                                <div id="comment2" class="comment-list"></div>
+                            </div>
+                            <div class="comment-column">
+                                <h4>评论内容</h4>
+                                <div id="comment3" class="comment-list"></div>
+                            </div>
+                        </div>
+
+                        <div id="emotion-analysis" class="emotion-panel">
+                            <div class="emotion-content">
+                                <h4><i class="fas fa-chart-bar"></i> 情感分析</h4>
+
+                                <div class="input-section">
+                                    <div class="form-group">
+                                        <label for="inputText"><i class="fas fa-font"></i> 输入文本</label>
+                                        <textarea id="inputText" placeholder="请输入要分析的文本（支持中文和英文）..."></textarea>
+
+                                        <div class="translation-info">
+                                            <i class="fas fa-info-circle translation-icon"></i> 系统会自动将非中文内容翻译为中文进行分析
+                                        </div>
+
+                                        <div class="sample-texts">
+                                            <div class="sample-btn" data-text="这个产品非常好用，我非常满意它的性能表现！">示例1: 好评</div>
+                                            <div class="sample-btn" data-text="服务太差了，等了两个小时都没人理我。">示例2: 差评</div>
+                                            <div class="sample-btn"
+                                                data-text="The movie was absolutely fantastic, I would definitely recommend it to everyone.">
+                                                示例3: 英文好评</div>
+                                            <div class="sample-btn"
+                                                data-text="I'm extremely disappointed with the quality of this product, it broke after two days.">
+                                                示例4: 英文差评</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="button-group">
+                                        <button id="analyzeBtn">
+                                            <i class="fas fa-search"></i> 分析情感
+                                        </button>
+                                        <button id="resetBtn">
+                                            <i class="fas fa-redo"></i> 重置内容
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="loading" id="loading">
+                                    <div class="spinner"></div>
+                                    <p>正在分析文本情感，请稍候...</p>
+                                </div>
+
+                                <div class="error" id="errorMsg"></div>
+
+                                <div class="result-box" id="resultBox">
+                                    <h5><i class="fas fa-chart-bar"></i> 分析结果</h5>
+
+                                    <div class="result-item">
+                                        <div class="result-label"><i class="fas fa-comment"></i> 输入文本</div>
+                                        <div class="result-content" id="resultInput"></div>
+                                    </div>
+
+                                    <div class="result-item">
+                                        <div class="result-label"><i class="fas fa-language"></i> 翻译文本</div>
+                                        <div class="result-content" id="resultTranslated"></div>
+                                    </div>
+
+                                    <div class="result-item">
+                                        <div class="result-label"><i class="fas fa-heart"></i> 情感预测</div>
+                                        <div class="result-content">
+                                            <span id="resultSentiment"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="result-item">
+                                        <div class="result-label"><i class="fas fa-stopwatch"></i> 处理时间</div>
+                                        <div class="result-content" id="resultTime"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/player.js"></script>
+</body>
+
+</html>

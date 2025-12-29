@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>评论搜索 - 游戏市场分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 背景和星空效果 */
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(rgba(10, 25, 47, 0.9), rgba(10, 25, 47, 0.9)), url("https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80");
+            background-size: cover;
+            background-position: center;
+            opacity: 0.7;
+            z-index: -2;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 1s infinite;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+
+        /* 导航栏样式 */
+        .page-header {
+            background: rgba(10, 25, 47, 0.9);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 20px 50px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        .page-header h1 {
+            color: #64ffda;
+            text-align: center;
+            font-size: 28px;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 10px 25px;
+            background: rgba(100, 255, 218, 0.1);
+            color: #64ffda;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            float: right;
+            margin-top: -60px;
+        }
+
+        .back-btn:hover {
+            background: rgba(100, 255, 218, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.2);
+            color: #fff;
+        }
+
+        /* 主要内容区域 */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* 搜索区域 */
+        .search-container {
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 20px;
+            background: rgba(10, 25, 47, 0.7);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .search-input::placeholder {
+            color: #8892b0;
+        }
+
+        .search-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #64ffda 0%, #00b894 100%);
+            color: #0a192f;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.4);
+        }
+
+        .search-info {
+            color: #8892b0;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* 结果统计 */
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(17, 34, 64, 0.7);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .stats-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stats-value {
+            color: #64ffda;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .stats-label {
+            color: #8892b0;
+            font-size: 14px;
+        }
+
+        /* 评论列表 */
+        .comments-container {
+            background: rgba(23, 42, 70, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .comments-header {
+            color: #64ffda;
+            font-size: 22px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        }
+
+        .comment-item {
+            background: rgba(10, 25, 47, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .comment-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            border-color: rgba(100, 255, 218, 0.3);
+        }
+
+        .comment-content {
+            color: #ccd6f6;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .highlight {
+            background: rgba(255, 255, 179, 0.3);
+            color: #ffd700;
+            font-weight: 600;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .comment-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .platform-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(100, 255, 218, 0.1);
+            color: #64ffda;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .type-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(0, 123, 255, 0.1);
+            color: #64ffda;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .comment-source {
+            color: #8892b0;
+            font-size: 14px;
+        }
+
+        /* 加载状态 */
+        .loading-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(100, 255, 218, 0.3);
+            border-radius: 50%;
+            border-top-color: #64ffda;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: #64ffda;
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        /* 错误信息 */
+        .error-container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .error-icon {
+            font-size: 48px;
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+
+        .error-text {
+            color: #dc3545;
+            font-size: 18px;
+        }
+
+        /* 空状态 */
+        .empty-container {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            color: #64ffda;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            color: #8892b0;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        /* 关键词标签 */
+        .keywords-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .keyword-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            background: rgba(255, 255, 179, 0.1);
+            color: #ffd700;
+            border: 1px solid rgba(255, 255, 179, 0.3);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* 滚动条样式 */
+        .comments-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(23, 42, 70, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 255, 218, 0.3);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 255, 218, 0.5);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 15px 20px;
+            }
+
+            .page-header h1 {
+                font-size: 22px;
+                margin-bottom: 10px;
+            }
+
+            .back-btn {
+                float: none;
+                display: block;
+                margin: 15px auto 0;
+                width: 100%;
+                text-align: center;
+            }
+
+            .container {
+                padding: 0 15px;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .search-btn {
+                width: 100%;
+            }
+
+            .stats-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .comment-meta {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
+
+        /* 页面入场动画 - 添加在CSS文件末尾 */
+
+        /* 优雅的入场动画关键帧 */
+        @keyframes elegantAppear {
+            0% {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: translateY(10px) scale(0.98);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* 为页面主要容器添加动画 */
+        .page-header {
+            animation: elegantAppear 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+            opacity: 0;
+        }
+
+        .search-container {
+            animation: elegantAppear 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards 0.2s;
+            opacity: 0;
+        }
+
+        .stats-container {
+            animation: fadeIn 0.6s ease-out forwards 0.3s;
+            opacity: 0;
+        }
+
+        .comments-container {
+            animation: elegantAppear 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards 0.4s;
+            opacity: 0;
+        }
+
+        /* 为关键词标签添加动画 */
+        .keyword-tag {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+            display: inline-block;
+        }
+
+        .keyword-tag.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 为统计项添加动画 */
+        .stats-item {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.4s ease-out;
+        }
+
+        .stats-item.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 为评论项添加动画 */
+        .comment-item {
+            opacity: 0;
+            transform: translateY(25px) scale(0.98);
+            transition: all 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        .comment-item.animated {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="background"></div>
+    <div class="stars"></div>
+
+    <div class="page-header">
+        <h1>多关键词评论搜索</h1>
+        <a href="Player.html" class="back-btn">返回玩家分析</a>
+    </div>
+
+    <div class="container">
+        <!-- 搜索区域 -->
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="输入多个关键词，用英文逗号分隔（例：刺激,好玩,画面精美）">
+                <button id="searchBtn" class="search-btn" onclick="performSearch()">搜索评论</button>
+            </div>
+            <p class="search-info">您可以输入多个关键词进行搜索，系统将查找包含所有关键词的评论</p>
+
+            <!-- 搜索关键词显示 -->
+            <div class="keywords-container" id="keywordsContainer"></div>
+        </div>
+
+        <!-- 搜索结果统计 -->
+        <div class="stats-container" id="statsContainer" style="display: none;">
+            <div class="stats-item">
+                <div class="stats-value" id="totalCount">0</div>
+                <div class="stats-label">总评论数</div>
+            </div>
+            <div class="stats-item">
+                <div class="stats-value" id="keywordCount">0</div>
+                <div class="stats-label">关键词数量</div>
+            </div>
+            <div class="stats-item">
+                <div class="stats-value" id="platformCount">0</div>
+                <div class="stats-label">平台数量</div>
+            </div>
+        </div>
+
+        <!-- 加载状态 -->
+        <div class="loading-container" id="loadingContainer" style="display: none;">
+            <div class="loading"></div>
+            <div class="loading-text">正在搜索评论，请稍候...</div>
+        </div>
+
+        <!-- 错误信息 -->
+        <div class="error-container" id="errorContainer" style="display: none;">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text" id="errorText"></div>
+        </div>
+
+        <!-- 评论列表 -->
+        <div class="comments-container" id="commentsContainer">
+            <div class="comments-header">搜索结果</div>
+            <div id="commentsList"></div>
+
+            <!-- 空状态 -->
+            <div class="empty-container" id="emptyContainer" style="display: none;">
+                <div class="empty-icon">💬</div>
+                <div class="empty-text">暂无搜索结果</div>
+                <p style="color: #8892b0; margin-top: 10px;">请尝试不同的关键词组合</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://47.109.22.23:8083/searchCommentByKeywords';
+        let currentKeywords = [];
+
+        // 初始化星空背景
+        function initStars() {
+            const stars = document.querySelector('.stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.top = Math.random() * 100 + 'vh';
+                star.style.left = Math.random() * 100 + 'vw';
+                star.style.width = Math.random() * 3 + 1 + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDuration = Math.random() * 3 + 1 + 's';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                stars.appendChild(star);
+            }
+        }
+
+        // 处理搜索逻辑
+        async function performSearch() {
+            const input = document.getElementById('searchInput').value.trim();
+            currentKeywords = input.split(',')
+                .map(k => k.trim())
+                .filter(k => k !== '');
+
+            if (currentKeywords.length === 0) {
+                showError('请至少输入一个有效关键词');
+                return;
+            }
+
+            try {
+                showLoading();
+                clearResults();
+                showKeywords(currentKeywords);
+
+                setTimeout(() => {
+                    const keywordTags = document.querySelectorAll('.keyword-tag');
+                    keywordTags.forEach((tag, index) => {
+                        setTimeout(() => {
+                            tag.classList.add('animated');
+                        }, 100 + index * 50);
+                    });
+                }, 100);
+
+                const response = await fetch(
+                    `${API_URL}?keywords=${encodeURIComponent(currentKeywords.join(','))}`
+                );
+
+                if (!response.ok) throw new Error(`HTTP错误: ${response.status}`);
+
+                const result = await response.json();
+
+                if (result.code === 1) {
+                    displayResults(result.data);
+                } else {
+                    showError(result.msg || '搜索失败，请稍后重试');
+                }
+            } catch (error) {
+                console.error('搜索错误:', error);
+                showError('搜索过程中发生错误，请检查网络连接后重试');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 显示关键词标签
+        function showKeywords(keywords) {
+            const container = document.getElementById('keywordsContainer');
+            container.innerHTML = '';
+
+            keywords.forEach(keyword => {
+                const tag = document.createElement('span');
+                tag.className = 'keyword-tag';
+                tag.textContent = keyword;
+                container.appendChild(tag);
+            });
+
+            container.style.display = keywords.length > 0 ? 'flex' : 'none';
+        }
+
+        // 显示搜索结果
+        function displayResults(comments) {
+            const container = document.getElementById('commentsList');
+            const statsContainer = document.getElementById('statsContainer');
+            const emptyContainer = document.getElementById('emptyContainer');
+
+            if (comments.length === 0) {
+                container.innerHTML = '';
+                emptyContainer.style.display = 'block';
+                statsContainer.style.display = 'none';
+                return;
+            }
+
+            emptyContainer.style.display = 'none';
+            container.innerHTML = '';
+
+            // 统计平台数量
+            const platforms = new Set(comments.map(c => c.commentPlatform));
+
+            // 更新统计数据
+            document.getElementById('totalCount').textContent = comments.length;
+            document.getElementById('keywordCount').textContent = currentKeywords.length;
+            document.getElementById('platformCount').textContent = platforms.size;
+            statsContainer.style.display = 'flex';
+
+            setTimeout(() => {
+                const statsItems = document.querySelectorAll('.stats-item');
+                statsItems.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.classList.add('animated');
+                    }, index * 100);
+                });
+            }, 200);
+
+            // 渲染评论
+            comments.forEach((comment, index) => {
+                const commentElement = createCommentElement(comment, index);
+                container.appendChild(commentElement);
+                let delay = 300 + (index < 20 ? index * 60 : 20 * 60);
+                setTimeout(() => {
+                    commentElement.classList.add('animated');
+                }, delay);
+            });
+
+        }
+
+        // 创建评论元素
+        function createCommentElement(comment, index) {
+            const element = document.createElement('div');
+            element.className = 'comment-item';
+
+            // 高亮关键词
+            let highlightedContent = comment.commentText;
+            currentKeywords.forEach(keyword => {
+                const regex = new RegExp(`(${escapeRegExp(keyword)})`, 'gi');
+                highlightedContent = highlightedContent.replace(
+                    regex,
+                    '<span class="highlight">$1</span>'
+                );
+            });
+
+            element.innerHTML = `
+                <div class="comment-content">${highlightedContent}</div>
+                <div class="comment-meta">
+                    <div>
+                        <span class="platform-tag">${comment.commentPlatform || '未知平台'}</span>
+                        ${comment.commentType ? `<span class="type-tag">${comment.commentType}</span>` : ''}
+                    </div>
+                    <div class="comment-source">评论 #${index + 1}</div>
+                </div>
+            `;
+
+            return element;
+        }
+
+        // 转义正则表达式特殊字符
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loadingContainer').style.display = 'block';
+            document.getElementById('commentsContainer').style.opacity = '0.5';
+            document.getElementById('searchBtn').disabled = true;
+            document.getElementById('searchBtn').innerHTML = '搜索中...';
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            document.getElementById('loadingContainer').style.display = 'none';
+            document.getElementById('commentsContainer').style.opacity = '1';
+            document.getElementById('searchBtn').disabled = false;
+            document.getElementById('searchBtn').innerHTML = '搜索评论';
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            const errorText = document.getElementById('errorText');
+
+            errorText.textContent = message;
+            errorContainer.style.display = 'block';
+
+            // 5秒后自动隐藏错误信息
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        // 清除结果
+        function clearResults() {
+            document.getElementById('commentsList').innerHTML = '';
+            document.getElementById('emptyContainer').style.display = 'none';
+            document.getElementById('statsContainer').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'none';
+        }
+
+        // 初始化页面
+        function initPage() {
+            initStars();
+
+            // 添加回车键支持
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch();
+            });
+
+            // 添加输入框焦点效果
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('focus', function () {
+                this.style.background = 'rgba(10, 25, 47, 0.9)';
+            });
+
+            searchInput.addEventListener('blur', function () {
+                this.style.background = 'rgba(10, 25, 47, 0.7)';
+            });
+
+            // 显示示例提示
+            const examples = [
+                '刺激,好玩',
+                '画面,音乐',
+                '剧情,沉浸感',
+                '操作,流畅',
+                '优化,卡顿'
+            ];
+
+            const randomExample = examples[Math.floor(Math.random() * examples.length)];
+            searchInput.placeholder = `输入多个关键词，用逗号分隔（例：${randomExample}）`;
+        }
+
+        // 页面加载完成后初始化
+
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+
+</html>
