@@ -4,4 +4,7 @@ name:shuyiran
 
 build html pages
 
-vue learning...
+vue python learning...
+
+attend to be a master!
+
